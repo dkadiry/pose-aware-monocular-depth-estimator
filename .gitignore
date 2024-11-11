@@ -1,0 +1,45 @@
+# Byte Compiled /optimized / DLL files
+__pychache__/
+*.py[cod]
+*$py.class
+
+# Model folders
+saved_models/
+checkpoints/
+
+# Enviroment configuration files
+/env 
+
+# Data
+/data 
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ignore other sensitive or unnecessary files/directories
+logs/
+
+# IDE-specific files 
+.vscode/
+.idea/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Unit test / coverage reports 
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.pytest_cache/
+
+# Temporary files
+*.tmp
+*.temp
