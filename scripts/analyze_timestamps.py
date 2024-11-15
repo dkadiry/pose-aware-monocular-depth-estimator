@@ -37,12 +37,16 @@ def main():
         missing_in_dmap = im_timestamp_set - dmap_set
         missing_in_pose = im_timestamp_set - pose_timestamp_set
         missing_in_posed = dmap_set - pose_timestamp_set 
+        missing_in_image_p = pose_timestamp_set - im_timestamp_set
+        missing_in_dmap_p = pose_timestamp_set - dmap_set
 
         if missing_in_dmap or missing_in_image or missing_in_pose or missing_in_posed:
             print(f'Missing in Image timestamp but present in Dmap timestamps: {missing_in_image}')
             print(f"Missing in Dmap timestamps, but present in Image timestamps: {missing_in_dmap}")
             print(f"Missing in Pose CSV file but present in Imgaes Folder: {missing_in_pose}")
             print(f"Missing in Pose CSV but present in Depth Map folder: {missing_in_posed}")
+            print(f"Missing in Image folder but present in Pose CSV: {missing_in_image_p}")
+            print(f"Missing in Depth Map folder but present in Pose CSV: {missing_in_dmap_p}")
 
         else:
             print(f"Timestamps are aligned between datasets")
