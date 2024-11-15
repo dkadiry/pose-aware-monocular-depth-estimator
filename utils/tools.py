@@ -6,6 +6,8 @@ import re
 import pandas as pd
 import yaml
 from typing import List, Tuple, Dict, Any
+import random
+import tensorflow as tf
 
 def rename_files_to_timestamps(folder_path: str) -> None:
     """
@@ -60,6 +62,16 @@ def collect_list_of_image_timestamps(folder_path: str) -> List[int]:
     return timestamp_list
 
 def get_files_from_directory(directory: str, extensions: List[str]) -> List[str]:
+    """
+    Retrieves a sorted list of filenames from a directory filtered by extensions.
+    
+    Parameters:
+    - directory (str): Path to the directory.
+    - extensions (List[str]): List of allowed file extensions.
+    
+    Returns:
+    - List[str]: Sorted list of matching filenames.
+    """
 
     return sorted([
         filename for filename in os.listdir(directory) 
@@ -67,12 +79,29 @@ def get_files_from_directory(directory: str, extensions: List[str]) -> List[str]
     ])
 
 def get_images_from_directory(directory: str) -> List[str]:
+    """
+    Retrieves a sorted list of image filenames from a directory.
+    
+    Parameters:
+    - directory (str): Path to the images directory.
+    
+    Returns:
+    - List[str]: Sorted list of image filenames.
+    """
 
     image_extensions = ['.jpg']
     return get_files_from_directory(directory, image_extensions)
 
 def get_depth_maps_from_directory(directory: str) -> List[str]:
-
+    """
+    Retrieves a sorted list of depth map filenames from a directory.
+    
+    Parameters:
+    - directory (str): Path to the depth maps directory.
+    
+    Returns:
+    - List[str]: Sorted list of depth map filenames.
+    """
     depth_map_extensions = ['.npy']
     return get_files_from_directory(directory, depth_map_extensions)
 
@@ -109,6 +138,43 @@ def load_config(config_path: str) -> Dict[str, Any]:
         config = yaml.safe_load(file)
     
     return config
+
+def seed_everything(seed: int = 42) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+
+def create_directories(directories: List[str]) -> None:
+    """
+    Creates directories if they do not exist.
+
+    """
+    for directory in directories:
+        os.makedirs(directory, exist_ok=True)
+
+def load_depth_map(file_path: str) -> np.ndarray:
+    """ 
+    Loads Numpy Depth Map found at the path specified in the function parameter
+    
+    Raises:
+        - FIleNotFoundError: If file does not exist
+        - ValueError: If there was an error loading the file
+
+    """
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Depth Map file not found: {file_path}")
+    try:
+        return np.load(file_path)
+    except Exception as err:
+        raise ValueError(f"Error loading depth map from {file_path}: {err}")
+
+def save_depth_map(depth_map: np.ndarray, save_path: str) -> None:
+    try:
+        np.save(save_path, depth_map)
+    except Exception as err:
+        raise ValueError(f"Error saving depth map to {save_path}: {err}")
+
 
 def associate_pose_with_depth_map(pose_df: pd.DataFrame, file_id: int) -> Dict[str, Any]:
     """
