@@ -33,12 +33,16 @@ def main():
     if pose_set_type == dmap_set_type and len(pose_set_type) == 1 and im_set_type == dmap_set_type:
         print("All sets have the same single data type.")
 
-        missing_in_pose = dmap_set - pose_timestamp_set
-        missing_in_dmap = pose_timestamp_set - dmap_set
+        missing_in_image = dmap_set - im_timestamp_set
+        missing_in_dmap = im_timestamp_set - dmap_set
+        missing_in_pose = im_timestamp_set - pose_timestamp_set
+        missing_in_posed = dmap_set - pose_timestamp_set 
 
-        if missing_in_dmap or missing_in_pose:
-            print(f'Missing in Pose timestamp but present in Dmap timestamps: {missing_in_pose}')
-            print(f"Missing in Dmap timestamps, but present in pose timestamps: {missing_in_dmap}")
+        if missing_in_dmap or missing_in_image or missing_in_pose or missing_in_posed:
+            print(f'Missing in Image timestamp but present in Dmap timestamps: {missing_in_image}')
+            print(f"Missing in Dmap timestamps, but present in Image timestamps: {missing_in_dmap}")
+            print(f"Missing in Pose CSV file but present in Imgaes Folder: {missing_in_pose}")
+            print(f"Missing in Pose CSV but present in Depth Map folder: {missing_in_posed}")
 
         else:
             print(f"Timestamps are aligned between datasets")
