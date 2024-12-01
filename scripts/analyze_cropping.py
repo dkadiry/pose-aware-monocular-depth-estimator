@@ -33,7 +33,7 @@ def analyze_cropping(images_dir: str, num_samples: int = 100, sample_interval: i
         plt.axis('off')
         
         # Initial guess for cropping (e.g., 100 pixels from bottom)
-        plt.axhline(y=image.shape[0] - 122, color='red', linestyle='--')        
+        plt.axhline(y=image.shape[0] - 120, color='red', linestyle='--')        
         plt.show()
         
         if (idx + 1) % sample_interval == 0:
