@@ -14,7 +14,7 @@ def main():
     depth_map_path = "data\cedarbay\depth_maps"
 
     
-    pose_csv_path = os.path.join("data", "cedarbay", "computed_FFC_relative_pose_data.csv")
+    pose_csv_path = os.path.join("data", "cedarbay", "Filtered_Relative_FFC_Pose_Euler.csv")
 
     poses_df = pd.read_csv(pose_csv_path)
     dmap_timestamps = collect_list_of_image_timestamps(depth_map_path)
