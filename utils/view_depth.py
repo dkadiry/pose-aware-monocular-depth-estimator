@@ -115,29 +115,56 @@ def save_error_map(error_map: np.ndarray, save_path: str, cmap: str = 'plasma') 
 def visualize_sample(image: np.ndarray, depth_map: np.ndarray, cmap: str = 'plasma', alpha: float = 0.8,
                     title_image: str = "RGB Image",
                     title_depth: str = "Depth Map",
-                    title_overlay: str = "Depth Overlay") -> None:
+                    title_overlay: str = "Depth Overlay",
+                    mode: str = "all") -> None:
     """
-    Visualizes the image, depth map, and their overlay.
+    Visualizes the image, depth map, and their overlay depending on the mode selected.
+    
     """
 
-    overlayed_image = overlay_depth_on_image(image, depth_map, alpha=alpha, cmap=cmap)
+    if mode == "all":
+        if image is None or depth_map is None:
+            raise ValueError("Both image and depth_map must be provided for 'all' mode.")
+        overlayed_image = overlay_depth_on_image(image, depth_map, alpha=alpha, cmap=cmap)
+        
+        plt.figure(figsize=(18, 6))
+        
+        plt.subplot(1, 3, 1)
+        plt.imshow(image)
+        plt.title(title_image)
+        plt.axis('off')
+        
+        plt.subplot(1, 3, 2)
+        plt.imshow(depth_map, cmap=cmap)
+        plt.title(title_depth)
+        plt.axis('off')
+        plt.colorbar(label='Depth')
+        
+        plt.subplot(1, 3, 3)
+        plt.imshow(overlayed_image)
+        plt.title(title_overlay)
+        plt.axis('off')
+        
+        plt.show()
     
-    plt.figure(figsize=(18, 6))
+    elif mode == "depth_only":
+        if depth_map is None:
+            raise ValueError("depth_map must be provided for 'depth_only' mode.")
+        plt.figure(figsize=(8, 6))
+        plt.imshow(depth_map, cmap=cmap)
+        plt.colorbar(label="Depth")
+        plt.title(title_depth)
+        plt.axis('off')
+        plt.show()
     
-    plt.subplot(1, 3, 1)
-    plt.imshow(image)
-    plt.title(title_image)
-    plt.axis('off')
+    elif mode == "image_only":
+        if image is None:
+            raise ValueError("image must be provided for 'image_only' mode.")
+        plt.figure(figsize=(8, 6))
+        plt.imshow(image)
+        plt.title(title_image)
+        plt.axis('off')
+        plt.show()
     
-    plt.subplot(1, 3, 2)
-    plt.imshow(depth_map, cmap=cmap)
-    plt.title(title_depth)
-    plt.axis('off')
-    plt.colorbar(label='Depth')
-    
-    plt.subplot(1, 3, 3)
-    plt.imshow(overlayed_image)
-    plt.title(title_overlay)
-    plt.axis('off')
-    
-    plt.show()
+    else:
+        raise ValueError("Invalid mode selected. Choose from 'all', 'depth_only', or 'image_only'.")
