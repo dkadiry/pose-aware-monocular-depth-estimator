@@ -212,6 +212,15 @@ def handle_infs_with_mask(depth_map: np.ndarray) -> Tuple[np.ndarray, np.ndarray
     # Create a mask where finite values are 1 and infs are 0
     mask = np.isfinite(depth_map).astype(np.float32)  # 1.0 for valid, 0.0 for inf
     
+    # Find the highest row with an infinite value in each column
+    inf_rows = np.where(~np.isfinite(depth_map), np.arange(depth_map.shape[0])[:, None], 0)
+    max_inf_row = inf_rows.max(axis=0)
+
+    # Extend the mask upwards for columns with inf values
+    for col in range(mask.shape[1]):
+        if max_inf_row[col] > 0:  # If there are inf values in the column
+            mask[:max_inf_row[col], col] = 0.0  # Set all rows above the last inf to 0.0
+
     # Replace inf values with 0 for visualization
     depth_map = np.where(np.isfinite(depth_map), depth_map, 0.0)
     
