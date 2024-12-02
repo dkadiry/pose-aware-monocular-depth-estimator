@@ -209,4 +209,4 @@ def visualize_sample(image: np.ndarray, depth_map: np.ndarray, mask: np.ndarray,
 
 
     else:
-        raise ValueError("Invalid mode selected. Choose from 'all', 'depth_only', or 'image_only'.")
+        raise ValueError("Invalid mode selected. Choose from 'all', 'depth_only', 'image_only', 'mask_only', 'all_with_mask'..")
