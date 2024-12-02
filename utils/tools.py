@@ -222,7 +222,7 @@ def handle_infs_with_mask(depth_map: np.ndarray) -> Tuple[np.ndarray, np.ndarray
             mask[:max_inf_row[col], col] = 0.0  # Set all rows above the last inf to 0.0
 
     # Replace inf values with 0 for visualization
-    depth_map = np.where(np.isfinite(depth_map), depth_map, 0.0)
+    depth_map = np.where(mask > 0, depth_map, 0.0)
     
     return depth_map, mask
 
