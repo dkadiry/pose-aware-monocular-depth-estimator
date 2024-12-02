@@ -20,5 +20,18 @@ def main():
     np.savez(percentiles_output_path, P1=P1, P99=P99)
     print(f"Saved percentiles to {percentiles_output_path}")
 
+def print_percentile_values():
+
+    # Define the output path for percentiles
+    percentiles_path = os.path.join('utils', 'percentiles.npz')
+
+    percentiles = np.load(percentiles_path)
+    lower_global = percentiles['P1']
+    upper_global = percentiles['P99']
+    print(f"Loaded Global Percentiles - P1: {lower_global}, P99: {upper_global}")
+
+    print(f"Located at {percentiles_path}")
+
 if __name__ == "__main__":
     main()
+    #print_percentile_values()
