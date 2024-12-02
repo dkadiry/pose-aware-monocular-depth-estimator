@@ -19,7 +19,11 @@ class DepthEstimationModel(tf.keras.Model):
 
         # Encoder: Downscale Blocks
         self.downscale_blocks = [
-            DownscaleBlock(f[0], name=f"downscale_block_{i}") for i in range(4)
+            DownscaleBlock(f[0], name=f"downscale_block_{0}"),
+            DownscaleBlock(f[1], name=f"downscale_block_{1}"),
+            DownscaleBlock(f[2], name=f"downscale_block_{2}"),
+            DownscaleBlock(f[3], name=f"downscale_block_{3}")
+
         ]
 
         # Bottleneck Block
@@ -27,7 +31,10 @@ class DepthEstimationModel(tf.keras.Model):
 
         # Decoder: Upscale Blocks
         self.upscale_blocks = [
-            UpscaleBlock(f[3], name=f"upscale_block_{i}") for i in range(4)
+            UpscaleBlock(f[3], name=f"upscale_block_{0}"),
+            UpscaleBlock(f[2], name=f"upscale_block_{1}"),
+            UpscaleBlock(f[1], name=f"upscale_block_{2}"),
+            UpscaleBlock(f[0], name=f"upscale_block_{3}"),
         ]
 
         # Final Convolutional Layer for Depth Output
@@ -132,8 +139,8 @@ class DownscaleBlock(layers.Layer):
         self.convB = layers.Conv2D(filters, kernel_size, strides, padding)
         self.reluA = layers.LeakyReLU(alpha=0.2)
         self.reluB = layers.LeakyReLU(alpha=0.2)
-        self.bn2a = layers.BatchNormalization()
-        self.bn2b = layers.BatchNormalization()
+        self.bn2a = tf.keras.layers.BatchNormalization()
+        self.bn2b = tf.keras.layers.BatchNormalization()
 
         self.pool = layers.MaxPool2D((2, 2), (2, 2))
 
@@ -169,8 +176,8 @@ class UpscaleBlock(layers.Layer):
         self.convB = layers.Conv2D(filters, kernel_size, strides, padding)
         self.reluA = layers.LeakyReLU(alpha=0.2)
         self.reluB = layers.LeakyReLU(alpha=0.2)
-        self.bn2a = layers.BatchNormalization()
-        self.bn2b = layers.BatchNormalization()
+        self.bn2a = tf.keras.layers.BatchNormalization()
+        self.bn2b = tf.keras.layers.BatchNormalization()
         self.conc = layers.Concatenate()
 
     def call(self, x, skip):
