@@ -19,23 +19,29 @@ def display_depth(depth_map: np.ndarray, cmap: str = 'plasma', title: str = "Dep
     plt.axis('off')
     plt.show()
 
-def overlay_depth_on_image(image: np.ndarray, depth_map: np.ndarray, alpha: float = 0.6, cmap: str = 'plasma') -> np.ndarray:
+def overlay_depth_on_image(image: np.ndarray, depth_map: np.ndarray, alpha: float = 0.8, cmap: str = 'plasma') -> np.ndarray:
     """
     Overlays a depth map onto an RGB image.
     
     Parameters:
-    - image (np.ndarray): Original RGB image.
-    - depth_map (np.ndarray): Depth map to overlay.
+    - image (np.ndarray): Original RGB image in [0, 255].
+    - depth_map (np.ndarray): Normalized depth map in [0, 1].
     - alpha (float): Transparency factor.
     - cmap (str): Colormap for depth map.
     
     Returns:
     - np.ndarray: Image with depth overlay.
     """
-    depth_normalized = depth_map / np.max(depth_map) if np.max(depth_map) != 0 else depth_map
-    depth_colored = plt.get_cmap(cmap)(depth_normalized)[:, :, :3]
-    overlayed_image = (1 - alpha) * image + alpha * (depth_colored * 255).astype(np.uint8)
-    return overlayed_image.astype(np.uint8)
+
+    depth_colored = plt.get_cmap(cmap)(depth_map)[:, :, :3]  # [0,1]
+    depth_colored = (depth_colored * 255).astype(np.uint8)
+    
+    # Ensure image is uint8
+    image_uint8 = image.astype(np.uint8)
+    
+    # Blend images
+    overlayed_image = cv2.addWeighted(image_uint8, 1 - alpha, depth_colored, alpha, 0)
+    return overlayed_image
 
 def plot_depth_histogram(depth_map: np.ndarray, bins: int = 50, title: str = "Depth Histogram") -> None:
     """
@@ -106,22 +112,14 @@ def save_error_map(error_map: np.ndarray, save_path: str, cmap: str = 'plasma') 
     plt.savefig(save_path, bbox_inches='tight')
     plt.close()
 
-def visualize_sample(image: np.ndarray, depth_map: np.ndarray, cmap: str = 'plasma', alpha: float = 0.6,
+def visualize_sample(image: np.ndarray, depth_map: np.ndarray, cmap: str = 'plasma', alpha: float = 0.8,
                     title_image: str = "RGB Image",
                     title_depth: str = "Depth Map",
                     title_overlay: str = "Depth Overlay") -> None:
     """
     Visualizes the image, depth map, and their overlay.
-    
-    Parameters:
-    - image (np.ndarray): RGB image.
-    - depth_map (np.ndarray): Depth map.
-    - cmap (str): Colormap for depth map.
-    - alpha (float): Transparency for overlay.
-    - title_image (str): Title for image subplot.
-    - title_depth (str): Title for depth map subplot.
-    - title_overlay (str): Title for overlay subplot.
     """
+
     overlayed_image = overlay_depth_on_image(image, depth_map, alpha=alpha, cmap=cmap)
     
     plt.figure(figsize=(18, 6))

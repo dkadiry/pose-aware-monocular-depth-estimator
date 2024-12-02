@@ -1,17 +1,42 @@
+import sys
 import tensorflow as tf
 import os
 import numpy as np
 import pandas as pd
 from typing import List, Tuple, Dict, Any
+
+# Add project root to sys.path before importing utils
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from utils.tools import (
     get_images_from_directory,
     get_depth_maps_from_directory,
     get_file_id,
     load_config,
+    load_depth_map,
 )
 from utils.view_depth import visualize_sample
+import matplotlib.pyplot as plt
+import cv2
 
-
+def normalize_depth_map(depth_map: np.ndarray, lower_percentile: float = 1.0, upper_percentile: float = 99.0) -> np.ndarray:
+    """
+    Normalizes the depth map based on specified percentiles to enhance contrast.
+    
+    Parameters:
+    - depth_map (np.ndarray): The original depth map.
+    - lower_percentile (float): Lower percentile for normalization.
+    - upper_percentile (float): Upper percentile for normalization.
+    
+    Returns:
+    - np.ndarray: The normalized depth map.
+    """
+    lower = np.percentile(depth_map, lower_percentile)
+    upper = np.percentile(depth_map, upper_percentile)
+    depth_normalized = np.clip((depth_map - lower) / (upper - lower), 0, 1)
+    return depth_normalized
 
 class CedarBayDataset(tf.keras.utils.Sequence):
     def __init__(
@@ -101,14 +126,10 @@ class CedarBayDataset(tf.keras.utils.Sequence):
             image = tf.image.decode_jpeg(image, channels=3)
             image = tf.cast(image, tf.float32)
 
-            # Load depth map
-            depth_map = tf.io.read_file(depth_path)
-            depth_map = tf.io.decode_raw(depth_map, tf.float32)
-
-            # Assuming depth maps are same size as image (720x1280)
-            original_height = 720  
-            original_width = 1280  
-            depth_map = tf.reshape(depth_map, [original_height, original_width])
+            # Load and decode depth map using NumPy
+            depth_map = load_depth_map(depth_path)  # Returns NumPy array
+            depth_map = normalize_depth_map(depth_map)  # Normalize for visualization
+            depth_map = tf.convert_to_tensor(depth_map, dtype=tf.float32)
 
             # Preprocessing
             if self.crop_pixels > 0:
@@ -231,7 +252,7 @@ def main():
             image=sample_image_vis,
             depth_map=sample_depth_map,
             cmap='plasma',
-            alpha=0.6,
+            alpha=0.8,
             title_image="Sample RGB Image",
             title_depth="Sample Depth Map",
             title_overlay="Sample Depth Overlay"
