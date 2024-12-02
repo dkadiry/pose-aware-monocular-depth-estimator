@@ -18,9 +18,8 @@ from utils.tools import (
     load_depth_map,
     handle_infs_with_mask,
     normalize_depth_map_global,
-    denormalize_depth_map_global,
-    compute_global_percentiles,
 )
+
 from utils.view_depth import visualize_sample
 import matplotlib.pyplot as plt
 import cv2
@@ -127,14 +126,19 @@ class CedarBayDataset(tf.keras.utils.Sequence):
 
                 # Load and decode depth map using NumPy
                 depth_map_np = load_depth_map(depth_path)  # Returns NumPy array
-                depth_map_np, mask = handle_infs_with_mask(depth_map_np)  # Handle infs and get mask
 
                 # Debug: Check raw depth map
                 print(f"Sample {sample_idx} - Raw Depth Map Shape: {depth_map_np.shape}")
                 print(f"Sample {sample_idx} - Raw Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
 
+                depth_map_np, mask = handle_infs_with_mask(depth_map_np)  # Handle infs and get mask
+
+                # Debug: Check raw depth map
+                print(f"Sample {sample_idx} - Masked Depth Map Shape: {depth_map_np.shape}")
+                print(f"Sample {sample_idx} - Masked Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
+
                 # Normalize depth map using global percentiles
-                depth_map_np = normalize_depth_map_global(depth_map_np)  # Normalize for visualization
+                depth_map_np = normalize_depth_map_global(depth_map_np, self.lower_global, self.upper_global)  # Normalize for visualization
 
                 # Debug: Check normalized depth map
                 print(f"Sample {sample_idx} - Normalized Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
@@ -281,6 +285,7 @@ def main():
     target_height = dataset_params['image_height']
     target_width = dataset_params['image_width']
     crop_pixels = dataset_params['crop_pixels']
+    shuffle = dataset_params['shuffle']
     pose_csv_path = dataset_params.get('pose_csv_path', None)
     pose_channels = dataset_params.get('pose_channels_vanilla', 0)
 
@@ -300,7 +305,7 @@ def main():
         target_height=target_height,
         target_width=target_width,
         crop_pixels=crop_pixels,
-        shuffle=True,
+        shuffle=shuffle,
         pose_csv_path=None,  # No pose data for vanilla model
         pose_channels=0
     )
