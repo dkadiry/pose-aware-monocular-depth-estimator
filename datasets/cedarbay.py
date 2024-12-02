@@ -16,64 +16,15 @@ from utils.tools import (
     get_file_id,
     load_config,
     load_depth_map,
+    handle_infs_with_mask,
+    normalize_depth_map_global,
+    denormalize_depth_map_global,
+    compute_global_percentiles,
 )
 from utils.view_depth import visualize_sample
 import matplotlib.pyplot as plt
 import cv2
 
-def handle_infs_with_mask(depth_map: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Replaces infinite values in the depth map with zero and creates a mask.
-    
-    Parameters:
-    - depth_map (np.ndarray): The original depth map.
-    
-    Returns:
-    - Tuple[np.ndarray, np.ndarray]: The depth map with infs set to 0, and the mask.
-    """
-    # Create a mask where finite values are 1 and infs are 0
-    mask = np.isfinite(depth_map).astype(np.float32)  # 1.0 for valid, 0.0 for inf
-    
-    # Replace inf values with 0 for visualization
-    depth_map = np.where(np.isfinite(depth_map), depth_map, 0.0)
-    
-    return depth_map, mask
-
-def normalize_depth_map(depth_map: np.ndarray, lower_percentile: float = 1.0, upper_percentile: float = 99.0) -> np.ndarray:
-    """
-    Normalizes the depth map based on specified percentiles to enhance contrast.
-    
-    Parameters:
-    - depth_map (np.ndarray): The original depth map.
-    - lower_percentile (float): Lower percentile for normalization.
-    - upper_percentile (float): Upper percentile for normalization.
-    
-    Returns:
-    - np.ndarray: The normalized depth map.
-    """
-
-    # Compute percentiles excluding zeros (which were originally inf)
-    finite_depths = depth_map[depth_map > 0]
-    if finite_depths.size == 0:
-        return depth_map  # Return as is if no finite depths
-    lower = np.percentile(finite_depths, lower_percentile)
-    upper = np.percentile(finite_depths, upper_percentile)
-    
-    # Avoid division by zero
-    if upper - lower == 0:
-        return depth_map  # Return as is if no variation
-    
-    # Normalize finite values
-    depth_normalized = np.where(
-        depth_map > 0,
-        (depth_map - lower) / (upper - lower),
-        0.0  # Keep zeros for inf regions
-    )
-    
-    # Clip values to [0, 1]
-    depth_normalized = np.clip(depth_normalized, 0.0, 1.0)
-    
-    return depth_normalized
 
 class CedarBayDataset(tf.keras.utils.Sequence):
     def __init__(
@@ -86,7 +37,8 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         crop_pixels: int = 0,
         shuffle: bool = True,
         pose_csv_path: str = None,
-        pose_channels: int = 0
+        pose_channels: int = 0,
+        percentiles_path: str = 'utils/percentiles.npz'  # Path to the saved percentiles
     ):
         """
         Initializes the CedarBayDataset.
@@ -111,6 +63,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         self.crop_pixels = crop_pixels
         self.shuffle = shuffle
         self.pose_channels = pose_channels
+        self.percentiles_path = percentiles_path
 
         # Load file lists
         self.image_files = get_images_from_directory(images_folder)
@@ -130,6 +83,14 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         else:
             self.pose_dict = {}
 
+        # Load precomputed global percentiles
+        if not os.path.exists(self.percentiles_path):
+            raise FileNotFoundError(f"Percentiles file not found at: {self.percentiles_path}")
+        percentiles = np.load(self.percentiles_path)
+        self.lower_global = percentiles['P1']
+        self.upper_global = percentiles['P99']
+        print(f"Loaded Global Percentiles - P1: {self.lower_global}, P99: {self.upper_global}")
+
         self.indices = np.arange(len(self.image_files))
         self.on_epoch_end()
 
@@ -142,7 +103,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         Generates one batch of data.
         Returns:
             Tuple containing:
-                - Batch of images: np.ndarray
+                - Batch of masked images: np.ndarray
                 - Batch of depth maps: np.ndarray
                 - Batch of masks: np.ndarray
         """
@@ -172,8 +133,8 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 print(f"Sample {sample_idx} - Raw Depth Map Shape: {depth_map_np.shape}")
                 print(f"Sample {sample_idx} - Raw Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
 
-
-                depth_map_np = normalize_depth_map(depth_map_np)  # Normalize for visualization
+                # Normalize depth map using global percentiles
+                depth_map_np = normalize_depth_map_global(depth_map_np)  # Normalize for visualization
 
                 # Debug: Check normalized depth map
                 print(f"Sample {sample_idx} - Normalized Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
@@ -181,7 +142,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 depth_map = tf.convert_to_tensor(depth_map_np, dtype=tf.float32)
                 mask_tensor = tf.convert_to_tensor(mask, dtype=tf.float32)
 
-                # Preprocessing
+                # Preprocessing: Crop
                 if self.crop_pixels > 0:
                     image = image[:-self.crop_pixels, :, :]
                     depth_map = depth_map[:-self.crop_pixels, :]
@@ -208,6 +169,9 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 image = image / 255.0
                 #max_depth = tf.reduce_max(depth_map)
                 #depth_map = depth_map / max_depth if max_depth != 0 else depth_map
+
+                # Apply mask to the image: set invalid regions to zero
+                image = tf.where(tf.expand_dims(mask_tensor, axis=-1) > 0, image, tf.zeros_like(image))
 
                 # Incorporate pose data if applicable
                 if self.pose_channels > 0:
@@ -364,7 +328,7 @@ def main():
             mask=sample_mask,
             cmap='plasma',
             alpha=0.6,
-            title_image="Sample RGB Image",
+            title_image="Sample Masked RGB Image",
             title_depth="Sample Normalized Depth Map",
             title_mask="Sample Depth Mask",
             title_overlay="Sample Depth Overlay",
