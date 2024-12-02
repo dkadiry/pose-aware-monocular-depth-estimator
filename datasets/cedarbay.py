@@ -33,11 +33,11 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         batch_size: int,
         target_height: int,
         target_width: int,
+        percentiles_path: str,
         crop_pixels: int = 0,
         shuffle: bool = True,
         pose_csv_path: str = None,
-        pose_channels: int = 0,
-        percentiles_path: str = 'utils/percentiles.npz'  # Path to the saved percentiles
+        pose_channels: int = 0
     ):
         """
         Initializes the CedarBayDataset.
@@ -52,6 +52,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         - shuffle (bool): Whether to shuffle the dataset each epoch.
         - pose_csv_path (str): Path to the pose data CSV file.
         - pose_channels (int): Number of pose channels to include (0, 1, or 3).
+        - percentiles_path (str): Path to the percentiles npz
         """
 
         self.images_folder = images_folder
@@ -128,20 +129,20 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 depth_map_np = load_depth_map(depth_path)  # Returns NumPy array
 
                 # Debug: Check raw depth map
-                print(f"Sample {sample_idx} - Raw Depth Map Shape: {depth_map_np.shape}")
-                print(f"Sample {sample_idx} - Raw Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
+                #print(f"Sample {sample_idx} - Raw Depth Map Shape: {depth_map_np.shape}")
+                #print(f"Sample {sample_idx} - Raw Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
 
                 depth_map_np, mask = handle_infs_with_mask(depth_map_np)  # Handle infs and get mask
 
                 # Debug: Check raw depth map
-                print(f"Sample {sample_idx} - Masked Depth Map Shape: {depth_map_np.shape}")
-                print(f"Sample {sample_idx} - Masked Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
+                #print(f"Sample {sample_idx} - Masked Depth Map Shape: {depth_map_np.shape}")
+                #print(f"Sample {sample_idx} - Masked Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
 
                 # Normalize depth map using global percentiles
                 depth_map_np = normalize_depth_map_global(depth_map_np, self.lower_global, self.upper_global)  # Normalize for visualization
 
                 # Debug: Check normalized depth map
-                print(f"Sample {sample_idx} - Normalized Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
+                #print(f"Sample {sample_idx} - Normalized Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
 
                 depth_map = tf.convert_to_tensor(depth_map_np, dtype=tf.float32)
                 mask_tensor = tf.convert_to_tensor(mask, dtype=tf.float32)
@@ -167,13 +168,11 @@ class CedarBayDataset(tf.keras.utils.Sequence):
 
                 # Debug: Check depth map after resizing
                 #print(f"Sample {sample_idx} - Resized Depth Map Shape: {depth_map.shape}")
-                #print(f"Sample {sample_idx} - Resized Depth Map Min: {depth_map.min()}, Max: {depth_map.max()}")
+                #print(f"Sample {sample_idx} - Resized Depth Map Min: {depth_map.numpy().min()}, Max: {depth_map.numpy().max()}")
 
                 # Preprocessing: Normalize
                 image = image / 255.0
-                #max_depth = tf.reduce_max(depth_map)
-                #depth_map = depth_map / max_depth if max_depth != 0 else depth_map
-
+                
                 # Apply mask to the image: set invalid regions to zero
                 image = tf.where(tf.expand_dims(mask_tensor, axis=-1) > 0, image, tf.zeros_like(image))
 
@@ -273,11 +272,24 @@ def main():
             'shuffle': True,
             'crop_pixels': 120,  # Based on our analysis
             'pose_csv_path': None,  # Not used for vanilla model
-            'pose_channels_vanilla': 0  # Defined here for the vanilla model
+            'pose_channels_vanilla': 0,  # Defined here for the vanilla model
+            'percentiles_path': os.path.join('utils', 'percentiles.npz')
         }
     }
 
-    # Extract dataset parameters
+    # Load Config
+    config_path = os.path.join("config", 'training_config.yaml')
+
+    if not os.path.exists(config_path):
+        print(f'Configuration file not found: {config_path}')
+        return
+    
+    config = load_config(config_path)
+
+    """
+
+    # Extract dataset parameters using Test_config dictionary
+
     dataset_params = test_config['dataset_parameters']
     images_folder = dataset_params['images_folder']
     depth_maps_folder = dataset_params['depth_maps_folder']
@@ -286,8 +298,24 @@ def main():
     target_width = dataset_params['image_width']
     crop_pixels = dataset_params['crop_pixels']
     shuffle = dataset_params['shuffle']
+    percentiles = dataset_params['percentiles_path']
     pose_csv_path = dataset_params.get('pose_csv_path', None)
     pose_channels = dataset_params.get('pose_channels_vanilla', 0)
+
+    """
+    # Extract dataset parameters using laoded training configuration
+    dataset_params = config.get('dataset_parameters', {})
+    images_folder = dataset_params.get('images_folder')
+    depth_maps_folder = dataset_params.get('depth_maps_folder')
+    batch_size = dataset_params.get('batch_size')
+    target_height = dataset_params.get('image_height')
+    target_width = dataset_params.get('image_width')
+    crop_pixels = dataset_params.get('crop_pixels')
+    shuffle = dataset_params.get('shuffle')
+    percentiles = dataset_params.get('percentiles_path')
+    pose_csv_path = dataset_params.get('pose_csv_path', None)
+    pose_channels = dataset_params.get('pose_channels_vanilla', 0)
+    
 
     # Validate essential paths
     if not os.path.exists(images_folder):
@@ -304,10 +332,11 @@ def main():
         batch_size=batch_size,
         target_height=target_height,
         target_width=target_width,
+        percentiles_path=percentiles,
         crop_pixels=crop_pixels,
         shuffle=shuffle,
         pose_csv_path=None,  # No pose data for vanilla model
-        pose_channels=0
+        pose_channels=0        
     )
 
     # Fetch a single batch
