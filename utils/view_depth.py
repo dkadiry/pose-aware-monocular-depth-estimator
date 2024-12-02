@@ -112,14 +112,14 @@ def save_error_map(error_map: np.ndarray, save_path: str, cmap: str = 'plasma') 
     plt.savefig(save_path, bbox_inches='tight')
     plt.close()
 
-def visualize_sample(image: np.ndarray, depth_map: np.ndarray, cmap: str = 'plasma', alpha: float = 0.8,
+def visualize_sample(image: np.ndarray, depth_map: np.ndarray, mask: np.ndarray, cmap: str = 'plasma', alpha: float = 0.6,
                     title_image: str = "RGB Image",
                     title_depth: str = "Depth Map",
+                    title_mask: str = "Depth Mask",
                     title_overlay: str = "Depth Overlay",
                     mode: str = "all") -> None:
     """
     Visualizes the image, depth map, and their overlay depending on the mode selected.
-    
     """
 
     if mode == "all":
@@ -165,6 +165,48 @@ def visualize_sample(image: np.ndarray, depth_map: np.ndarray, cmap: str = 'plas
         plt.title(title_image)
         plt.axis('off')
         plt.show()
-    
+
+    elif mode == "mask_only":
+        if mask is None:
+            raise ValueError("mask must be provided for 'mask_only' mode.")
+        plt.figure(figsize=(8, 6))
+        plt.imshow(mask, cmap='gray')
+        plt.colorbar(label="Mask")
+        plt.title(title_mask)
+        plt.axis('off')
+        plt.show()
+
+    elif mode == "all_with_mask":
+        if image is None or depth_map is None or mask is None:
+            raise ValueError("Image, depth_map, and mask must be provided for 'all_with_mask' mode.")
+        overlayed_image = overlay_depth_on_image(image, depth_map, alpha=alpha, cmap=cmap)
+        
+        plt.figure(figsize=(24, 6))
+        
+        plt.subplot(1, 4, 1)      
+        plt.imshow(image)
+        plt.title(title_image)
+        plt.axis('off')
+        
+        plt.subplot(1, 4, 2)
+        plt.imshow(depth_map, cmap=cmap)
+        plt.title(title_depth)
+        plt.axis('off')
+        plt.colorbar(label='Depth')
+        
+        plt.subplot(1, 4, 3)
+        plt.imshow(mask, cmap='gray')
+        plt.title(title_mask)
+        plt.axis('off')
+        plt.colorbar(label='Mask')
+        
+        plt.subplot(1, 4, 4)
+        plt.imshow(overlayed_image)
+        plt.title(title_overlay)
+        plt.axis('off')
+        
+        plt.show()
+
+
     else:
         raise ValueError("Invalid mode selected. Choose from 'all', 'depth_only', or 'image_only'.")
