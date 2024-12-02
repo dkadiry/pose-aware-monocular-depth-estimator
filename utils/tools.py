@@ -199,5 +199,86 @@ def associate_pose_with_depth_map(pose_df: pd.DataFrame, file_id: int) -> Dict[s
         'roll': pose_row['roll'].values[0]
     }
 
+def handle_infs_with_mask(depth_map: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Replaces infinite values in the depth map with zero and creates a mask.
+    
+    Parameters:
+    - depth_map (np.ndarray): The original depth map.
+    
+    Returns:
+    - Tuple[np.ndarray, np.ndarray]: The depth map with infs set to 0, and the mask.
+    """
+    # Create a mask where finite values are 1 and infs are 0
+    mask = np.isfinite(depth_map).astype(np.float32)  # 1.0 for valid, 0.0 for inf
+    
+    # Replace inf values with 0 for visualization
+    depth_map = np.where(np.isfinite(depth_map), depth_map, 0.0)
+    
+    return depth_map, mask
+
+def compute_global_percentiles(depth_maps_folder: str, lower: float = 1.0, upper: float = 99.0) -> Tuple[float, float]:
+    """
+    Computes global lower and upper percentiles across the dataset.
+
+    Parameters:
+    - depth_maps_folder (str): Path to the folder containing depth maps.
+    - lower (float): Lower percentile (default: 1.0).
+    - upper (float): Upper percentile (default: 99.0).
+
+    Returns:
+    - Tuple[float, float]: (P1, P99) percentile values.
+    """
+    all_finite_depths = []
+    for depth_file in os.listdir(depth_maps_folder):
+        if depth_file.endswith('.npy'):
+            depth_map = load_depth_map(os.path.join(depth_maps_folder, depth_file))
+            finite_depths = depth_map[np.isfinite(depth_map)]
+            finite_depths = finite_depths[finite_depths > 0]  # Exclude zeros (replaced infs)
+            all_finite_depths.extend(finite_depths.flatten())
+    all_finite_depths = np.array(all_finite_depths)
+    lower_percentile = np.percentile(all_finite_depths, lower)
+    upper_percentile = np.percentile(all_finite_depths, upper)
+    return lower_percentile, upper_percentile
+
+def normalize_depth_map_global(depth_map: np.ndarray, lower: float, upper: float) -> np.ndarray:
+    """
+    Normalizes the depth map based on global percentiles.
+    
+    Parameters:
+    - depth_map (np.ndarray): The original depth map.
+    - lower (float): Global lower percentile value.
+    - upper (float): Global upper percentile value.
+    
+    Returns:
+    - np.ndarray: The normalized depth map in [0, 1].
+    """
+    # Normalize finite values
+    depth_normalized = np.where(
+        depth_map > 0,
+        (depth_map - lower) / (upper - lower),
+        0.0  # Keep zeros for inf regions
+    )
+    
+    # Clip values to [0, 1]
+    depth_normalized = np.clip(depth_normalized, 0.0, 1.0)
+    
+    return depth_normalized
+
+def denormalize_depth_map_global(normalized_depth: np.ndarray, lower: float, upper: float) -> np.ndarray:
+    """
+    Denormalizes the depth map based on global percentiles.
+    
+    Parameters:
+    - normalized_depth (np.ndarray): Normalized depth map in [0, 1].
+    - lower (float): Global lower percentile value.
+    - upper (float): Global upper percentile value.
+    
+    Returns:
+    - np.ndarray: Denormalized depth map.
+    """
+    depth_denormalized = normalized_depth * (upper - lower) + lower
+    return depth_denormalized
+
 if __name__ == "__main__":
     pass
