@@ -272,11 +272,13 @@ class CedarBayDataset(tf.keras.utils.Sequence):
 
                 batch_images.append(image.numpy())
                 batch_depths.append(depth_map.numpy())
+                batch_masks.append(mask_tensor.numpy())
+
 
             except Exception as e:
                 print(f"Error processing sample index {sample_idx}: {e}")
 
-        return np.array(batch_images), np.array(batch_depths)
+        return np.array(batch_images), np.array(batch_depths), np.array(batch_masks)
 
     def on_epoch_end(self):
         """Shuffles indices after each epoch if shuffle is enabled."""
@@ -350,7 +352,7 @@ def main():
     if len(images) > 0 and len(depth_maps) > 0:
         sample_image = images[0]
         sample_depth_map = depth_maps[0]
-        sample_masks = masks[0]
+        sample_mask = masks[0]
     
 
         # Convert image from [0,1] to [0,255] for visualization
@@ -359,11 +361,14 @@ def main():
         visualize_sample(
             image=sample_image_vis,
             depth_map=sample_depth_map,
+            mask=sample_mask,
             cmap='plasma',
             alpha=0.6,
             title_image="Sample RGB Image",
-            title_depth="Sample Depth Map",
-            title_overlay="Sample Depth Overlay"
+            title_depth="Sample Normalized Depth Map",
+            title_mask="Sample Depth Mask",
+            title_overlay="Sample Depth Overlay",
+            mode = "all_with_mask"
         )
     else:
         print("No samples found in the batch.")
