@@ -154,10 +154,8 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                     mask_tensor = mask_tensor[:-self.crop_pixels, :]
 
                     # Debug: Check depth map after cropping
-                    print(f"Sample {sample_idx} - Cropped Depth Map Shape: {depth_map.shape}")
-                    print(f"Sample {sample_idx} - Cropped Depth Map Min: {depth_map.numpy().min()}, Max: {depth_map.numpy().max()}")
-
-                
+                    #print(f"Sample {sample_idx} - Cropped Depth Map Shape: {depth_map.shape}")
+                    #print(f"Sample {sample_idx} - Cropped Depth Map Min: {depth_map.numpy().min()}, Max: {depth_map.numpy().max()}")
 
                 # Preprocessing: Resize
                 image = tf.image.resize(image, [self.target_height, self.target_width], method='bilinear')
