@@ -251,6 +251,24 @@ class CedarBayDataset(tf.keras.utils.Sequence):
             np.random.shuffle(self.indices)
 
 
+class SubsetCedarBayDataset(CedarBayDataset):
+    """Dataset subclass that represents a subset of the data."""
+
+    def __init__(self, *args, subset_indices: List[int] = None, **kwargs):
+        """
+        Initializes the SubsetCedarBayDataset.
+
+        Parameters:
+        - subset_indices (List[int]): List of indices to include in the subset.
+        - All other parameters are inherited from CedarBayDataset.
+        """
+        super().__init__(*args, **kwargs)
+        if subset_indices is not None:
+            self.indices = subset_indices
+        else:
+            self.indices = np.arange(len(self.image_files))
+
+
 def main():
     """
     Testing functionality for CedarBayDataset.
