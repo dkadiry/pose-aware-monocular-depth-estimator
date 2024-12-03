@@ -37,7 +37,8 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         crop_pixels: int = 0,
         shuffle: bool = True,
         pose_csv_path: str = None,
-        pose_channels: int = 0
+        pose_channels: int = 0,
+        subset_indices: List[int] = None
     ):
         """
         Initializes the CedarBayDataset.
@@ -91,12 +92,17 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         self.upper_global = percentiles['P99']
         print(f"Loaded Global Percentiles - P1: {self.lower_global}, P99: {self.upper_global}")
 
-        self.indices = np.arange(len(self.image_files))
+        # Handle subset indices
+        if subset_indices is not None:
+                self.indices = np.array(subset_indices)
+        else:
+            self.indices = np.arange(len(self.image_files))
+        
         self.on_epoch_end()
 
     def __len__(self) -> int:
         """Returns the number of batches per epoch."""
-        return int(np.floor(len(self.image_files) / self.batch_size))
+        return  int(np.floor(len(self.indices) / self.batch_size))
 
     def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -134,7 +140,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 # Handle infs and get mask
                 depth_map_np, mask = handle_infs_with_mask(depth_map_np)  
 
-                # Debug: Check raw depth map
+                # Debug: Check masked depth map
                 #print(f"Sample {sample_idx} - Masked Depth Map Shape: {depth_map_np.shape}")
                 #print(f"Sample {sample_idx} - Masked Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
 
@@ -210,6 +216,10 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         if self.shuffle:
             np.random.shuffle(self.indices)
 
+    def get_num_samples(self) -> int:
+        """ Returns number of samples in the dataset """
+        return len(self.indices)
+
 
 class SubsetCedarBayDataset(CedarBayDataset):
     """Dataset subclass that represents a subset of the data."""
@@ -224,9 +234,11 @@ class SubsetCedarBayDataset(CedarBayDataset):
         """
         super().__init__(*args, **kwargs)
         if subset_indices is not None:
-            self.indices = subset_indices
+            self.indices = np.array(subset_indices)
         else:
             self.indices = np.arange(len(self.image_files))
+        
+        self.on_epoch_end()
 
 
 def main():
