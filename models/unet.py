@@ -5,7 +5,7 @@ from tensorflow.keras import layers, models  # type: ignore
 class DepthEstimationModel(tf.keras.Model):
     """U-Net Architecture for Depth Estimation."""
 
-    def __init__(self, width, height, name="DepthEstimationModel"):
+    def __init__(self, width, height, input_channels=3, name="DepthEstimationModel"):
         super().__init__(name=name)
         self.ssim_loss_weight = 0.85
         self.l1_loss_weight = 0.1
@@ -13,6 +13,7 @@ class DepthEstimationModel(tf.keras.Model):
         self.loss_metric = tf.keras.metrics.Mean(name="loss")
         self.width = width
         self.height = height
+        self.input_channels = input_channels
 
         # Define filter sizes for different blocks
         f = [16, 32, 64, 128, 256]
@@ -231,6 +232,8 @@ if __name__ == "__main__":
     # Example usage: Instantiate the model
     width = 1024
     height = 768  
-    model = DepthEstimationModel(width=width, height=height)
-    model.build(input_shape=(None, height, width, 3))
+    input_channels = 3 # 3, 4, or 6 depending on model
+
+    model = DepthEstimationModel(width=width, height=height, input_channels=input_channels)
+    model.build(input_shape=(None, height, width, input_channels))
     model.summary()
