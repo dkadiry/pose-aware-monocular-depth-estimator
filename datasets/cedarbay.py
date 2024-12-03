@@ -98,21 +98,20 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         """Returns the number of batches per epoch."""
         return int(np.floor(len(self.image_files) / self.batch_size))
 
-    def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray]:
         """
         Generates one batch of data.
         Returns:
             Tuple containing:
                 - Batch of masked images: np.ndarray
                 - Batch of depth maps: np.ndarray
-                - Batch of masks: np.ndarray
         """
         # Generate indices for the batch
         batch_indices = self.indices[index * self.batch_size:(index + 1) * self.batch_size]
 
         batch_images = []
         batch_depths = []
-        batch_masks = []
+        #batch_masks = []
 
         for i, sample_idx in enumerate(batch_indices):
             try:
@@ -132,7 +131,8 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 #print(f"Sample {sample_idx} - Raw Depth Map Shape: {depth_map_np.shape}")
                 #print(f"Sample {sample_idx} - Raw Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
 
-                depth_map_np, mask = handle_infs_with_mask(depth_map_np)  # Handle infs and get mask
+                # Handle infs and get mask
+                depth_map_np, mask = handle_infs_with_mask(depth_map_np)  
 
                 # Debug: Check raw depth map
                 #print(f"Sample {sample_idx} - Masked Depth Map Shape: {depth_map_np.shape}")
@@ -176,7 +176,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
 
                 # Incorporate pose data if applicable
                 if self.pose_channels > 0:
-                    file_id = self.file_ids[i]
+                    file_id = self.file_ids[sample_idx]
                     pose_data = self.pose_dict.get(file_id, None)
                     if pose_data:
                         if self.pose_channels == 1:
@@ -195,55 +195,15 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                     else:
                         print(f"Pose data missing for file ID: {file_id}")
                 
-                # Debugging Visualization for the First Sample in the Batch
-                #if i == 0:                    
-                #    plt.figure(figsize=(15, 10))
-                
-                    # Normalized Depth Map Visualization Only
-                #    plt.subplot(1, 2, 1)
-                #    plt.title("Normalized Depth Map")
-                #    plt.imshow(depth_map.numpy(), cmap='plasma')
-                #    plt.colorbar(label='Depth')
-                #    plt.axis('off')
-                    
-                    # Mask Visualization
-                #    plt.subplot(1, 2, 2)
-                #    plt.title("Depth Mask")
-                #    plt.imshow(mask_tensor.numpy(), cmap='gray')
-                #    plt.colorbar(label='Mask')
-                #    plt.axis('off')
-                    
-                #    plt.tight_layout()
-                #    plt.show()
-
-                    # After Cropping
-                    #cropped_depth_map = depth_map.numpy()[:-self.crop_pixels, :] if self.crop_pixels > 0 else depth_map.numpy()
-                    #plt.subplot(2, 2, 3)
-                    #plt.title("Cropped Depth Map")
-                    #plt.imshow(cropped_depth_map, cmap='plasma')
-                    #plt.colorbar(label='Depth')
-                    #plt.axis('off')
-                    
-                    # After Resizing
-                    #resized_depth_map = depth_map.numpy()
-                    #plt.subplot(2, 2, 4)
-                    #plt.title("Resized Depth Map")
-                    #plt.imshow(resized_depth_map, cmap='plasma')
-                    #plt.colorbar(label='Depth')
-                    #plt.axis('off')
-                    
-                    #plt.tight_layout()
-                    #plt.show()
-
                 batch_images.append(image.numpy())
                 batch_depths.append(depth_map.numpy())
-                batch_masks.append(mask_tensor.numpy())
+                #batch_masks.append(mask_tensor.numpy())
 
 
             except Exception as e:
                 print(f"Error processing sample index {sample_idx}: {e}")
 
-        return np.array(batch_images), np.array(batch_depths), np.array(batch_masks)
+        return np.array(batch_images), np.array(batch_depths)
 
     def on_epoch_end(self):
         """Shuffles indices after each epoch if shuffle is enabled."""
@@ -357,7 +317,7 @@ def main():
 
     # Fetch a single batch
     try:
-        images, depth_maps, masks = dataset.__getitem__(0)
+        images, depth_maps = dataset.__getitem__(0)
     except Exception as e:
         print(f"Error fetching batch: {e}")
         return
@@ -366,7 +326,7 @@ def main():
     if len(images) > 0 and len(depth_maps) > 0:
         sample_image = images[0]
         sample_depth_map = depth_maps[0]
-        sample_mask = masks[0]
+        #sample_mask = masks[0]
     
 
         # Convert image from [0,1] to [0,255] for visualization
@@ -375,14 +335,14 @@ def main():
         visualize_sample(
             image=sample_image_vis,
             depth_map=sample_depth_map,
-            mask=sample_mask,
+            mask=None,
             cmap='plasma',
             alpha=0.6,
             title_image="Sample Masked RGB Image",
             title_depth="Sample Normalized Depth Map",
-            title_mask="Sample Depth Mask",
+            #title_mask="Sample Depth Mask",
             title_overlay="Sample Depth Overlay",
-            mode = "all_with_mask"
+            mode = "all"
         )
     else:
         print("No samples found in the batch.")
