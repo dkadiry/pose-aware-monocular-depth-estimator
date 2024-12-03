@@ -253,6 +253,36 @@ def main():
         print(f"Error transferring weights: {e}")
         return
 
+    # Define Callbacks
+    checkpoint_dir = experiment_params['models'][model_variant]['checkpoint_dir']
+    os.makedirs(checkpoint_dir, exist_ok=True)
+
+    checkpoint_filepath = experiment_params['models'][model_variant]['checkpoint_file']
+    checkpoint_cb = tf.keras.callbacks.ModelCheckpoint(
+        filepath=checkpoint_filepath,
+        save_best_only=True,
+        save_weights_only=True,
+        monitor='val_loss',
+        mode='min',
+        verbose=1
+    )
+
+    early_stopping_cb = tf.keras.callbacks.EarlyStopping(
+        monitor='val_loss',
+        patience=10,
+        restore_best_weights=True,
+        verbose=1
+    )
+
+    tensorboard_log_dir = logging_params['tensorboard_log_dir']
+    tensorboard_cb = tf.keras.callbacks.TensorBoard(
+        log_dir=tensorboard_log_dir,
+        histogram_freq=1
+    )
+
+    # Define callbacks list
+    callbacks = [checkpoint_cb, early_stopping_cb, tensorboard_cb]
+
 
 if __name__ == "__main__":
     main()
