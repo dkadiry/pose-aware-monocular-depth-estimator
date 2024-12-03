@@ -24,9 +24,10 @@ experiment_parameters:
   pretrain: True  # Set to True to load pre-trained weights
 
 model_parameters:
-  input_shape_vanilla: [768, 1024, 3]  # image_height x image_width x channels
-  input_shape_rel_z: [768, 1024, 4]
-  input_shape_rel_z_pitch_roll: [768, 1024, 6]
+  input_shapes:
+    vanilla: [768, 1024, 3]  # image_height x image_width x channels
+    rel_z: [768, 1024, 4]
+    rel_z_pitch_roll: [768, 1024, 6]
   num_classes: 1  # Depth estimation is a regression task
 
 logging_parameters:
