@@ -7,6 +7,9 @@ __pychache__/
 saved_models/
 checkpoints/
 
+# Results
+inference_results/
+
 # Enviroment configuration files
 /env 
 
