@@ -1,0 +1,45 @@
+dataset_parameters:
+  images_folder: 'data/cedarbay/images'         # Path to test images
+  depth_maps_folder: 'data/cedarbay/depth_maps' # Path to test depth maps
+  image_height: 768
+  image_width: 1024
+  image_channels: 3
+  depth_channels: 1
+  batch_size: 8
+  training_ratio: 0.80
+  validation_ratio: 0.15
+  test_ratio: 0.05
+  shuffle: True
+  crop_pixels: 120
+  pose_csv_path: 'data/cedarbay/computed_FFC_relative_pose_data.csv'  # Path to pose CSV
+  pose_channels:
+    vanilla: 0
+    rel_z: 1
+    rel_z_pitch_roll: 3
+  percentiles_path: 'utils/percentiles.npz'
+
+model_parameters:
+  input_shapes:
+    vanilla: [768, 1024, 3]
+    rel_z: [768, 1024, 4]
+    rel_z_pitch_roll: [768, 1024, 6]
+  num_classes: 1  # Depth estimation is a regression task
+
+inference_parameters:
+  model_variant: 'vanilla'  # Options: 'vanilla', 'rel_z', 'rel_z_pitch_roll' # Unused for now
+  models:
+    vanilla:
+      checkpoint_file: 'checkpoints/cedarbay_vanilla/cedarbay_vanilla_model_unet-50.ckpt'  # Exact path to trained model weights
+      output_dir: 'inference_results/vanilla'  # Directory to save predictions and visualizations
+    rel_z:
+      checkpoint_file: 'checkpoints/cedarbay_rel_z/cedarbay_rel_z_model_unet-50.ckpt'  
+      output_dir: 'inference_results/rel_z'  
+    rel_z_pitch_roll:
+      checkpoint_file: 'checkpoints/cedarbay_rel_z_pitch_roll/cedarbay_rel_z_pitch_roll_model_unet-50.ckpt' 
+      output_dir: 'inference_results/rel_z_pitch_roll'  
+  visualize: true                # Whether to generate visualizations
+  save_predictions: true         # Whether to save prediction maps
+  save_error_maps: true          # Whether to save error maps
+
+logging_parameters:
+  log_dir: 'logs/inference'       # Directory for inference logs 
