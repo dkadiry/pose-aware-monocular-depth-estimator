@@ -38,7 +38,7 @@ def main():
         print(f"Loaded Global Percentiles - P1: {lower}, P99: {upper}")
 
     # Select model variant to train ('vanilla', 'rel_z', or 'rel_z_pitch_roll')
-    model_variant = 'vanilla'
+    model_variant = experiment_params['model_variant']
 
     # Initialize the full dataset
     full_dataset = CedarBayDataset(
@@ -285,6 +285,7 @@ def main():
 
     # Define callbacks list
     callbacks = [checkpoint_cb, early_stopping_cb, tensorboard_cb]
+    """
     
     # Train the model
     history = model.fit(
@@ -299,9 +300,7 @@ def main():
     os.makedirs(saved_model_dir, exist_ok=True)
     model.save(saved_model_dir)
     print(f"Model saved to {saved_model_dir}")
-
-    
-    
+    """
 
 if __name__ == "__main__":
     main()
