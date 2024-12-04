@@ -301,8 +301,8 @@ def main():
     crop_pixels = dataset_params.get('crop_pixels')
     shuffle = dataset_params.get('shuffle')
     percentiles = dataset_params.get('percentiles_path')
-    pose_csv_path = dataset_params.get('pose_csv_path', None)
-    pose_channels = dataset_params.get('pose_channels_vanilla', 0)
+    pose_csv_path = dataset_params.get('pose_csv_path')
+    pose_channels = dataset_params.get('pose_channels', {})
     
 
     # Validate essential paths
@@ -323,8 +323,8 @@ def main():
         percentiles_path=percentiles,
         crop_pixels=crop_pixels,
         shuffle=shuffle,
-        pose_csv_path=None,  # No pose data for vanilla model
-        pose_channels=0        
+        pose_csv_path=pose_csv_path, 
+        pose_channels=pose_channels['vanilla']        
     )
 
     # Fetch a single batch
