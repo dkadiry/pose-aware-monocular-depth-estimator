@@ -152,6 +152,11 @@ def main():
     assert len(np.intersect1d(train_indices, test_indices)) == 0, "Training and Test sets overlap!"
     assert len(np.intersect1d(val_indices, test_indices)) == 0, "Validation and Test sets overlap!"
 
+    #for images, depth_maps in train_dataset:
+    #    print("Images shape:", images.shape)        # Expected: (batch_size, height, width, channels + pose_channels)
+    #    print("Depth maps shape:", depth_maps.shape) # Expected: (batch_size, height, width, 1)
+    #    break  # Only inspect the first batch
+
     # Initialize model vanilla, rel_z, or rel_z_pitch_roll
     input_shape = model_params['input_shapes'][model_variant]  # [768, 1024, 3]
     input_channels = input_shape[2]
@@ -286,8 +291,7 @@ def main():
     # Define callbacks list
     callbacks = [checkpoint_cb, early_stopping_cb, tensorboard_cb]
     """
-    
-    # Train the model
+     # Train the model
     history = model.fit(
         train_dataset,
         epochs=experiment_params['epochs'],
@@ -300,7 +304,10 @@ def main():
     os.makedirs(saved_model_dir, exist_ok=True)
     model.save(saved_model_dir)
     print(f"Model saved to {saved_model_dir}")
-    """
+
+    """   
+   
+    
 
 if __name__ == "__main__":
     main()
