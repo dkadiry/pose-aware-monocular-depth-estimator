@@ -1,4 +1,3 @@
-import yaml
 import tensorflow as tf
 from models.unet import DepthEstimationModel, DownscaleBlock, UpscaleBlock, BottleNeckBlock
 from datasets.cedarbay import CedarBayDataset, SubsetCedarBayDataset
