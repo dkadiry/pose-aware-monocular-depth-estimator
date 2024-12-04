@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import cv2
 from typing import Tuple, Dict, Any
+import tensorflow as tf
 
 def display_depth(depth_map: np.ndarray, cmap: str = 'plasma', title: str = "Depth Map") -> None:
     """
@@ -129,6 +130,9 @@ def visualize_and_save_inference_sample(image: np.ndarray, true_depth_map: np.nd
       Visualizes and saves the true depth map, predicted depth map, and error map for rel_z, and rel_z_pitch_roll models
     
     """
+    true_depth_map = tf.squeeze(true_depth_map, axis=-1)
+    pred_depth_map = tf.squeeze(pred_depth_map, axis=-1)
+    
     if mode == "vanilla":
         plt.figure(figsize=(15, 10))
                     
@@ -203,6 +207,8 @@ def visualize_sample(image: np.ndarray, depth_map: np.ndarray, mask: np.ndarray,
     """
     Visualizes the image, depth map, and their overlay depending on the mode selected.
     """
+
+    depth_map = tf.squeeze(depth_map, axis=-1)
 
     if mode == "all":
         if image is None or depth_map is None:
