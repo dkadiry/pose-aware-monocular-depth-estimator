@@ -6,8 +6,8 @@ from models.unet import DepthEstimationModel, DownscaleBlock, UpscaleBlock, Bott
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import numpy as np
 import os
-from utils.tools import denormalize_depth_map_global, load_depth_map, seed_everything, load_config, save_depth_map
-from utils.view_depth import visualize_sample
+from utils.tools import denormalize_depth_map_global, seed_everything, load_config, save_depth_map
+from utils.view_depth import visualize_and_save_inference_sample, save_error_map
 import matplotlib.pyplot as plt
 
 def main():
@@ -29,7 +29,7 @@ def main():
     logging_params = config.get('logging_parameters', {})
     
     # Select model variant for inference
-    model_variant = 'vanilla'
+    model_variant = inference_params['model_variant']
     if model_variant not in model_params['input_shapes']:
         print(f"Invalid model_variant: {model_variant}. Available options: {list(model_params['input_shapes'].keys())}")
         return
@@ -42,7 +42,7 @@ def main():
     test_indices = np.load(test_indices_path)
     
     # Initialize the test dataset
-    test_dataset = CedarBayDataset(
+    test_dataset = SubsetCedarBayDataset(
         images_folder=dataset_params['images_folder'],
         depth_maps_folder=dataset_params['depth_maps_folder'],
         batch_size=dataset_params['batch_size'],
@@ -57,6 +57,8 @@ def main():
     )
     
     print(f"Test dataset samples: {test_dataset.get_num_samples()} | Test dataset number of batches: {len(test_dataset)}")
+    
+
     
     # Initialize model based on model_variant 'vanilla' 'rel_z' or 'rel_z_pitch_roll'
     input_shape = model_params['input_shapes'][model_variant] 
@@ -126,91 +128,75 @@ def main():
             # Visualization and saving
             if inference_params.get('visualize', True):
                 image = images[i]
-                # Convert image from [0,1] to [0,255] for visualization
+                # Convert image from [0,1] to [0,255] for visualization - This is Only displayed for vanilla model as the pose and scale boosted model images have been concantenated with additional channels.
                 image_vis = (image * 255).astype(np.uint8)
-                
-                plt.figure(figsize=(15, 10))
-                
-                plt.subplot(2, 2, 1)
-                plt.title("Masked RGB Image")
-                plt.imshow(image_vis)
-                plt.axis('off')
-                
-                plt.subplot(2, 2, 2)
-                plt.title("Predicted Depth Map")
-                plt.imshow(pred_depth, cmap='plasma')
-                plt.colorbar(label='Depth')
-                plt.axis('off')
-                
-                plt.subplot(2, 2, 3)
-                plt.title("True Depth Map")
-                plt.imshow(true_depth, cmap='plasma')
-                plt.colorbar(label='Depth')
-                plt.axis('off')
-                
-                plt.subplot(2, 2, 4)
-                plt.title("Error Map (Absolute Difference)")
-                plt.imshow(error_map, cmap='hot')
-                plt.colorbar(label='Error')
-                plt.axis('off')
-                
-                plt.tight_layout()
                 save_path = os.path.join(output_dir, f"batch{batch_idx+1}_sample{i+1}.png")
-                plt.savefig(save_path)
-                plt.close()
-                print(f"Saved inference result to {save_path}")
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+                
+                visualize_and_save_inference_sample(
+                    image=image_vis,
+                    true_depth_map=true_depth,
+                    pred_depth_map=pred_depth,
+                    error_map=error_map,
+                    save_path=save_path,
+                    mode = model_variant                    
+                )                
 
             if inference_params.get('save_predictions', True):
-                # Optionally, save inidvidual prediction maps as .npy files
+                # Save inidvidual prediction maps as .npy files
+
                 # Define the filename
                 pred_filename = f"pred_depth_map_batch{batch_idx+1}_sample{i+1}.npy"
                 pred_path = os.path.join(output_dir, 'predictions', pred_filename)
-                os.makedirs(pred_path, exist_ok=True)
-                save_depth_map(pred_path, pred_depth)
+                os.makedirs(os.path.dirname(pred_path), exist_ok=True)
+                save_depth_map(pred_depth, pred_path)
                 print(f"Saved predicted depth map to {pred_path}")
             
             if inference_params.get('save_error_maps', True):
-                # Optionally, save error maps as .png files
+                # Save error maps as .png files
+
                 err_map_filename = f"error_map_batch{batch_idx+1}_sample{i+1}.png"
-                err_maps_path = os.path.join(output_dir, 'error_maps', err_map_filename)
-                os.makedirs(err_maps_path, exist_ok=True)
-                np.save(os.path.join(error_maps_dir, 'error_maps.npy'), all_error_maps)
-                print(f"Saved all error maps to {error_maps_dir}/error_maps.npy")
+                err_map_path = os.path.join(output_dir, 'error_maps', err_map_filename)
+                os.makedirs(err_map_path, exist_ok=True)
+                save_error_map(error_map, err_map_path)
+                print(f"Saved error map to {err_map_path}")
+
+            # Compute Individual Metrics
+            mse = mean_squared_error(true_depth, pred_depth)
+            mae = mean_absolute_error(true_depth, pred_depth)
+            rmse = np.sqrt(mean_squared_error(true_depth, pred_depth))
+
+            # Save metrics to a file
+            metrics_path = os.path.join(output_dir, f'evaluation_metrics{batch_idx+1}_sample{i+1}.txt')
+            with open(metrics_path, 'w') as f:
+                f.write(f"Mean Squared Error (MSE): {mse}\n")
+                f.write(f"Mean Absolute Error (MAE): {mae}\n")
+                f.write(f"Root Mean Squared Error (RMSE): {rmse}\n")
+            
+            print(f"Saved evaluation metrics to {metrics_path}")
+            
     
     # Concatenate all true and predicted depths for metric computation
     all_true_depths = np.concatenate(all_true_depths, axis=0).flatten()
     all_pred_depths = np.concatenate(all_pred_depths, axis=0).flatten()
-    
-    # Compute Metrics
-    mae = mean_absolute_error(all_true_depths, all_pred_depths)
-    rmse = np.sqrt(mean_squared_error(all_true_depths, all_pred_depths))
-    
-    print(f"Mean Absolute Error (MAE): {mae}")
-    print(f"Root Mean Squared Error (RMSE): {rmse}")
-    
+
+    # Compute Metrics for All Predictions
+    all_mse = mean_squared_error(all_true_depths, all_pred_depths)
+    all_mae = mean_absolute_error(all_true_depths, all_pred_depths)
+    all_rmse = np.sqrt(mean_squared_error(all_true_depths, all_pred_depths))
+
     # Save metrics to a file
-    metrics_path = os.path.join(output_dir, 'evaluation_metrics.txt')
-    with open(metrics_path, 'w') as f:
-        f.write(f"Mean Absolute Error (MAE): {mae}\n")
-        f.write(f"Root Mean Squared Error (RMSE): {rmse}\n")
+    all_metrics_path = os.path.join(output_dir, f'evaluation_metrics{model_variant}.txt')
+    with open(all_metrics_path, 'w') as f:
+        f.write(f"Mean Squared Error (MSE): {all_mse}\n")
+        f.write(f"Mean Absolute Error (MAE): {all_mae}\n")
+        f.write(f"Root Mean Squared Error (RMSE): {all_rmse}\n")
     
-    print(f"Saved evaluation metrics to {metrics_path}")
-    
-    if inference_params.get('save_predictions', True):
-        # Optionally, save prediction maps as .npy files
-        predictions_dir = os.path.join(output_dir, 'predictions')
-        os.makedirs(predictions_dir, exist_ok=True)
-        np.save(os.path.join(predictions_dir, 'pred_depth_maps.npy'), all_pred_depths)
-        print(f"Saved all predicted depth maps to {predictions_dir}/pred_depth_maps.npy")
-    
-    if inference_params.get('save_error_maps', True):
-        # Optionally, save error maps as .npy files
-        error_maps_dir = os.path.join(output_dir, 'error_maps')
-        os.makedirs(error_maps_dir, exist_ok=True)
-        np.save(os.path.join(error_maps_dir, 'error_maps.npy'), all_error_maps)
-        print(f"Saved all error maps to {error_maps_dir}/error_maps.npy")
+    print(f"Mean Absolute Error All Depth Maps (MAE): {all_mae}")
+    print(f"Mean Squared Error (MSE): {all_mse}")
+    print(f"Root Mean Squared Error (RMSE): {all_rmse}")
     
     print("Inference and evaluation completed successfully.")
-
+    
 if __name__ == "__main__":
     main()
