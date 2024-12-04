@@ -73,13 +73,18 @@ def main():
     model.build(input_shape=(None, input_shape[0], input_shape[1], input_channels))
     model.summary()
     
-    # Load the trained model weights
-    checkpoint_file = inference_params['models'][model_variant]['checkpoint_file']
-    if not os.path.exists(checkpoint_file + '.index'):  # TensorFlow saves .index and .data files
-        print(f"Checkpoint file not found: {checkpoint_file}")
+    # Load the SavedModel
+    saved_model_path = inference_params['models'][model_variant]['saved_model_path']
+    if not os.path.exists(saved_model_path):
+        print(f"SavedModel directory not found: {saved_model_path}")
         return
-    model.load_weights(checkpoint_file)
-    print(f"Loaded weights from {checkpoint_file}")
+    
+    try:
+        model = tf.keras.models.load_model(saved_model_path)
+        print(f"Loaded model from {saved_model_path}")
+    except Exception as e:
+        print(f"Error loading SavedModel: {e}")
+        return
     
     # Load global percentiles
     if not os.path.exists(dataset_params['percentiles_path']):
@@ -157,7 +162,7 @@ def main():
 
                 err_map_filename = f"error_map_batch{batch_idx+1}_sample{i+1}.png"
                 err_map_path = os.path.join(output_dir, 'error_maps', err_map_filename)
-                os.makedirs(err_map_path, exist_ok=True)
+                os.makedirs(os.path.dirname(err_map_path), exist_ok=True)
                 save_error_map(error_map, err_map_path)
                 print(f"Saved error map to {err_map_path}")
 
