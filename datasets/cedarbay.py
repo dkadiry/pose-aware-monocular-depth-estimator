@@ -166,7 +166,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 # Preprocessing: Resize
                 image = tf.image.resize(image, [self.target_height, self.target_width], method='bilinear')
                 depth_map = tf.image.resize(depth_map[..., tf.newaxis], [self.target_height, self.target_width], method='bilinear')
-                depth_map = tf.squeeze(depth_map, axis=-1)
+                #depth_map = tf.squeeze(depth_map, axis=-1)
                 mask_tensor = tf.image.resize(mask_tensor[..., tf.newaxis], [self.target_height, self.target_width], method='nearest')
                 mask_tensor = tf.squeeze(mask_tensor, axis=-1)
 
