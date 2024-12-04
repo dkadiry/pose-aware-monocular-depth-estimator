@@ -6,6 +6,15 @@ import numpy as np
 import os
 from utils.tools import seed_everything, load_config
 
+from datetime import datetime  # Import datetime for timestamp generation
+
+def get_run_identifier():
+    """
+    Generates a unique identifier based on the current timestamp.
+    Format: YYYYMMDD_HHMMSS
+    """
+    return datetime.now().strftime("%Y%m%d_%H%M%S")
+
 def main():
     # Set seed for reproducibility
     seed_everything(42)
@@ -261,6 +270,21 @@ def main():
         print(f"Error transferring weights: {e}")
         return
 
+    # Generate a unique run identifier
+    run_id = get_run_identifier() 
+
+    # Generate a unique run identifier
+    run_id = get_run_identifier()  
+
+    # Define the base log directory from configuration
+    base_log_dir = logging_params['tensorboard_log_dir']  
+
+    # Create a unique log directory for this run
+    unique_log_dir = os.path.join(base_log_dir, f"run_{run_id}")
+
+    # Ensure the directory exists
+    os.makedirs(unique_log_dir, exist_ok=True)
+
     # Define Callbacks
     checkpoint_dir = experiment_params['models'][model_variant]['checkpoint_dir']
     os.makedirs(checkpoint_dir, exist_ok=True)
@@ -282,16 +306,18 @@ def main():
         verbose=1
     )
 
-    tensorboard_log_dir = logging_params['tensorboard_log_dir']
     tensorboard_cb = tf.keras.callbacks.TensorBoard(
-        log_dir=tensorboard_log_dir,
-        histogram_freq=1
+        log_dir=unique_log_dir,
+        histogram_freq=1,
+        write_graph=True,
+        write_images=True
     )
 
     # Define callbacks list
     callbacks = [checkpoint_cb, early_stopping_cb, tensorboard_cb]
-    """
-     # Train the model
+    
+
+    # Train the model
     history = model.fit(
         train_dataset,
         epochs=experiment_params['epochs'],
@@ -305,8 +331,7 @@ def main():
     model.save(saved_model_dir)
     print(f"Model saved to {saved_model_dir}")
 
-    """   
-   
+       
     
 
 if __name__ == "__main__":
