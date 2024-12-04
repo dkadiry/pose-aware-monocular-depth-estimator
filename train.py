@@ -149,6 +149,10 @@ def main():
     print(f"Training samples: {train_dataset.get_num_samples()} | | Validation samples: {val_dataset.get_num_samples()} | Testing samples: {test_dataset.get_num_samples()}")
     print(f"Training batches: {len(train_dataset)} | Validation batches: {len(val_dataset)} |Testing batches: {len(test_dataset)}")
 
+    assert len(np.intersect1d(train_indices, val_indices)) == 0, "Training and Validation sets overlap!"
+    assert len(np.intersect1d(train_indices, test_indices)) == 0, "Training and Test sets overlap!"
+    assert len(np.intersect1d(val_indices, test_indices)) == 0, "Validation and Test sets overlap!"
+
     # Initialize model vanilla, rel_z, or rel_z_pitch_roll
     input_shape = model_params['input_shapes'][model_variant]  # [768, 1024, 3]
     input_channels = input_shape[2]
@@ -283,6 +287,19 @@ def main():
     # Define callbacks list
     callbacks = [checkpoint_cb, early_stopping_cb, tensorboard_cb]
 
+    # Train the model
+    history = model.fit(
+        train_dataset,
+        epochs=experiment_params['epochs'],
+        validation_data=val_dataset,  # Use validation set for monitoring
+        callbacks=callbacks
+    )
+
+    # Save the final model
+    saved_model_dir = experiment_params['models'][model_variant]['saved_model_dir']
+    os.makedirs(saved_model_dir, exist_ok=True)
+    model.save(saved_model_dir)
+    print(f"Model saved to {saved_model_dir}")
 
 if __name__ == "__main__":
     main()
