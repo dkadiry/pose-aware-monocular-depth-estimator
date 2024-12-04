@@ -79,18 +79,17 @@ def calculate_depth_error(gt_depth_map: np.ndarray, predicted_depth_map: np.ndar
     mse = np.sum(error_map**2) / non_zero if non_zero != 0 else float('inf')
     return error_map, mse
 
-def create_error_map(error_map: np.ndarray, cmap: str = 'plasma', title: str = "Depth Error Map") -> None:
+def create_error_map(error_map: np.ndarray, title: str = "Depth Error Map") -> None:
     """
     Displays the depth error map.
     
     Parameters:
     - error_map (np.ndarray): Error map to display.
-    - cmap (str): Colormap for visualization.
     - title (str): Title of the plot.
     """
     plt.figure(figsize=(8, 6))
     
-    cmap = cmap = sns.color_palette("icefire", as_cmap=True)
+    cmap = sns.color_palette("icefire", as_cmap=True)
     ax = sns.heatmap(error_map, cmap=cmap, vmin=-5.0, vmax=5.0, cbar_kws={"label": "Error"})
     ax.axes.xaxis.set_visible(False)
     ax.axes.yaxis.set_visible(False)
@@ -99,18 +98,18 @@ def create_error_map(error_map: np.ndarray, cmap: str = 'plasma', title: str = "
     plt.show()
 
 
-def save_error_map(error_map: np.ndarray, save_path: str, cmap: str = 'plasma') -> None:
+def save_error_map(error_map: np.ndarray, save_path: str) -> None:
     """
     Saves the error map as an image.
     
     Parameters:
     - error_map (np.ndarray): Error map to save.
     - save_path (str): File path to save the image.
-    - cmap (str): Colormap for visualization.
+    
     """
     plt.figure(figsize=(8, 6))
     
-    cmap = cmap = sns.color_palette("icefire", as_cmap=True)
+    cmap = sns.color_palette("icefire", as_cmap=True)
     ax = sns.heatmap(error_map, cmap=cmap, vmin=-5.0, vmax=5.0, cbar_kws={"label": "Error"})
     ax.axes.xaxis.set_visible(False)
     ax.axes.yaxis.set_visible(False)
@@ -119,7 +118,7 @@ def save_error_map(error_map: np.ndarray, save_path: str, cmap: str = 'plasma') 
     plt.savefig(save_path)
     plt.close()
 
-def visualize_and_save_inference_sample(image: np.ndarray, true_depth_map: np.ndarray, pred_depth_map: np.ndarray, error_map: np.ndarray, save_path: str, cmap: str = 'plasma', alpha: float = 0.6,
+def visualize_and_save_inference_sample(image: np.ndarray, true_depth_map: np.ndarray, pred_depth_map: np.ndarray, error_map: np.ndarray, save_path: str,
                     title_image: str = "Masked RGB Image",
                     title_true: str = "Denormalized True Depth Map",
                     title_pred: str = "Denormalized Predicted Depth Mask",
@@ -152,8 +151,8 @@ def visualize_and_save_inference_sample(image: np.ndarray, true_depth_map: np.nd
         
         plt.subplot(2, 2, 4)
         plt.title(title_err)
-        cmap = cmap = sns.color_palette("icefire", as_cmap=True)
-        ax = sns.heatmap(error_map, cmap=cmap, vmin=-5.0, vmax=5.0, cbar_kws={"label": "Error"})
+        err_cmap = sns.color_palette("icefire", as_cmap=True)
+        ax = sns.heatmap(error_map, cmap=err_cmap, vmin=-5.0, vmax=5.0, cbar_kws={"label": "Error"})
         ax.axes.xaxis.set_visible(False)
         ax.axes.yaxis.set_visible(False)
         
@@ -161,7 +160,9 @@ def visualize_and_save_inference_sample(image: np.ndarray, true_depth_map: np.nd
         plt.savefig(save_path)
         plt.close()
 
-    if mode == 'boosted_models':
+        print(f"Saved inference result to {save_path}")
+
+    elif mode == 'rel_z' or mode == 'rel_z_pitch_roll':
         plt.figure(figsize=(15, 10))
                            
         plt.subplot(1, 3, 1)
@@ -178,14 +179,19 @@ def visualize_and_save_inference_sample(image: np.ndarray, true_depth_map: np.nd
         
         plt.subplot(1, 3, 3)
         plt.title(title_err)
-        cmap = cmap = sns.color_palette("icefire", as_cmap=True)
-        ax = sns.heatmap(error_map, cmap=cmap, vmin=-5.0, vmax=5.0, cbar_kws={"label": "Error"})
+        err_cmap = sns.color_palette("icefire", as_cmap=True)
+        ax = sns.heatmap(error_map, cmap=err_cmap, vmin=-5.0, vmax=5.0, cbar_kws={"label": "Error"})
         ax.axes.xaxis.set_visible(False)
         ax.axes.yaxis.set_visible(False)
 
         plt.tight_layout()
         plt.savefig(save_path)
         plt.close()
+
+        print(f"Saved inference result to {save_path}")
+
+    else:
+        raise ValueError("Invalid mode selected choose 'vanilla' or 'rel_z' or 'rel_z_pitch_roll' ")
         
     
 def visualize_sample(image: np.ndarray, depth_map: np.ndarray, mask: np.ndarray, cmap: str = 'plasma', alpha: float = 0.6,
