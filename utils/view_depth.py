@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 import cv2
 from typing import Tuple, Dict, Any
 
@@ -88,9 +89,12 @@ def create_error_map(error_map: np.ndarray, cmap: str = 'plasma', title: str = "
     - title (str): Title of the plot.
     """
     plt.figure(figsize=(8, 6))
-    plt.imshow(error_map, cmap=cmap)
-    plt.colorbar(label='Error')
-    plt.title(title)
+    
+    cmap = cmap = sns.color_palette("icefire", as_cmap=True)
+    ax = sns.heatmap(error_map, cmap=cmap, vmin=-5.0, vmax=5.0, cbar_kws={"label": "Error"})
+    ax.axes.xaxis.set_visible(False)
+    ax.axes.yaxis.set_visible(False)
+    plt.title("Depth Error Map")
     plt.axis('off')
     plt.show()
 
@@ -105,13 +109,85 @@ def save_error_map(error_map: np.ndarray, save_path: str, cmap: str = 'plasma') 
     - cmap (str): Colormap for visualization.
     """
     plt.figure(figsize=(8, 6))
-    plt.imshow(error_map, cmap=cmap)
-    plt.colorbar(label='Error')
+    
+    cmap = cmap = sns.color_palette("icefire", as_cmap=True)
+    ax = sns.heatmap(error_map, cmap=cmap, vmin=-5.0, vmax=5.0, cbar_kws={"label": "Error"})
+    ax.axes.xaxis.set_visible(False)
+    ax.axes.yaxis.set_visible(False)
     plt.title("Depth Error Map")
-    plt.axis('off')
-    plt.savefig(save_path, bbox_inches='tight')
+    
+    plt.savefig(save_path)
     plt.close()
 
+def visualize_and_save_inference_sample(image: np.ndarray, true_depth_map: np.ndarray, pred_depth_map: np.ndarray, error_map: np.ndarray, save_path: str, cmap: str = 'plasma', alpha: float = 0.6,
+                    title_image: str = "Masked RGB Image",
+                    title_true: str = "Denormalized True Depth Map",
+                    title_pred: str = "Denormalized Predicted Depth Mask",
+                    title_err: str = "Error Map (Absolute Difference)",
+                    mode: str = "vanilla") -> None:
+    """
+      Visualizes and saves the image, true depth map, predicted depth map, and error map for vanilla model
+      Visualizes and saves the true depth map, predicted depth map, and error map for rel_z, and rel_z_pitch_roll models
+    
+    """
+    if mode == "vanilla":
+        plt.figure(figsize=(15, 10))
+                    
+        plt.subplot(2, 2, 1)
+        plt.title(title_image)
+        plt.imshow(image)
+        plt.axis('off')
+        
+        plt.subplot(2, 2, 2)
+        plt.title(title_pred)
+        plt.imshow(pred_depth_map, cmap='plasma')
+        plt.colorbar(label='Depth')
+        plt.axis('off')
+        
+        plt.subplot(2, 2, 3)
+        plt.title(title_true)
+        plt.imshow(true_depth_map, cmap='plasma')
+        plt.colorbar(label='Depth')
+        plt.axis('off')
+        
+        plt.subplot(2, 2, 4)
+        plt.title(title_err)
+        cmap = cmap = sns.color_palette("icefire", as_cmap=True)
+        ax = sns.heatmap(error_map, cmap=cmap, vmin=-5.0, vmax=5.0, cbar_kws={"label": "Error"})
+        ax.axes.xaxis.set_visible(False)
+        ax.axes.yaxis.set_visible(False)
+        
+        plt.tight_layout()
+        plt.savefig(save_path)
+        plt.close()
+
+    if mode == 'boosted_models':
+        plt.figure(figsize=(15, 10))
+                           
+        plt.subplot(1, 3, 1)
+        plt.title(title_pred)
+        plt.imshow(pred_depth_map, cmap='plasma')
+        plt.colorbar(label='Depth')
+        plt.axis('off')
+        
+        plt.subplot(1, 3, 2)
+        plt.title(title_true)
+        plt.imshow(true_depth_map, cmap='plasma')
+        plt.colorbar(label='Depth')
+        plt.axis('off')
+        
+        plt.subplot(1, 3, 3)
+        plt.title(title_err)
+        cmap = cmap = sns.color_palette("icefire", as_cmap=True)
+        ax = sns.heatmap(error_map, cmap=cmap, vmin=-5.0, vmax=5.0, cbar_kws={"label": "Error"})
+        ax.axes.xaxis.set_visible(False)
+        ax.axes.yaxis.set_visible(False)
+
+        plt.tight_layout()
+        plt.savefig(save_path)
+        plt.close()
+        
+    
 def visualize_sample(image: np.ndarray, depth_map: np.ndarray, mask: np.ndarray, cmap: str = 'plasma', alpha: float = 0.6,
                     title_image: str = "RGB Image",
                     title_depth: str = "Depth Map",
