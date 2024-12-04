@@ -26,7 +26,7 @@ model_parameters:
   num_classes: 1  # Depth estimation is a regression task
 
 inference_parameters:
-  model_variant: 'vanilla'  # Options: 'vanilla', 'rel_z', 'rel_z_pitch_roll' # Unused for now
+  model_variant: 'vanilla'  # Options: 'vanilla', 'rel_z', 'rel_z_pitch_roll' 
   models:
     vanilla:
       checkpoint_file: 'checkpoints/cedarbay_vanilla/cedarbay_vanilla_model_unet-50.ckpt'  # Exact path to trained model weights
