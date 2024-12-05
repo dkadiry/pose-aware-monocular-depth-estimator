@@ -58,8 +58,32 @@ def main():
     
     print(f"Test dataset samples: {test_dataset.get_num_samples()} | Test dataset number of batches: {len(test_dataset)}")
     
-
     
+    # Load the SavedModel
+    saved_model_path = inference_params['models'][model_variant]['saved_model_path']
+    if not os.path.exists(saved_model_path):
+        print(f"SavedModel directory not found: {saved_model_path}")
+        return
+    
+    try:
+        model = tf.keras.models.load_model(
+            saved_model_path,
+            custom_objects={
+                'DepthEstimationModel': DepthEstimationModel,
+                'DownscaleBlock': DownscaleBlock,
+                'UpscaleBlock': UpscaleBlock,
+                'BottleNeckBlock': BottleNeckBlock
+            })
+        print(f"Loaded model from {saved_model_path}")
+        model.summary()
+    except Exception as e:
+        print(f"Error loading SavedModel: {e}")
+        return
+    
+    
+    
+    """
+
     # Initialize model based on model_variant 'vanilla' 'rel_z' or 'rel_z_pitch_roll'
     input_shape = model_params['input_shapes'][model_variant] 
     input_channels = input_shape[2]
@@ -72,19 +96,17 @@ def main():
     # Build the model to initialize weights
     model.build(input_shape=(None, input_shape[0], input_shape[1], input_channels))
     model.summary()
-    
-    # Load the SavedModel
-    saved_model_path = inference_params['models'][model_variant]['saved_model_path']
-    if not os.path.exists(saved_model_path):
-        print(f"SavedModel directory not found: {saved_model_path}")
+
+    # Load the trained model weights
+    checkpoint_file = inference_params['models'][model_variant]['checkpoint_file']
+    if not os.path.exists(checkpoint_file + '.index'):  # TensorFlow saves .index and .data files
+        print(f"Checkpoint file not found: {checkpoint_file}")
         return
+    model.load_weights(checkpoint_file)
+    print(f"Loaded weights from {checkpoint_file}")
+
+    """
     
-    try:
-        model = tf.keras.models.load_model(saved_model_path)
-        print(f"Loaded model from {saved_model_path}")
-    except Exception as e:
-        print(f"Error loading SavedModel: {e}")
-        return
     
     # Load global percentiles
     if not os.path.exists(dataset_params['percentiles_path']):
@@ -106,7 +128,7 @@ def main():
     all_error_maps = []
     
     # Iterate over the test dataset and make predictions
-    for batch_idx in range(len(test_dataset)):
+    for batch_idx in range(1): #len(test_dataset)
         print(f"Processing batch {batch_idx + 1}/{len(test_dataset)}")
         images, depth_maps = test_dataset[batch_idx]
         
@@ -122,12 +144,16 @@ def main():
         all_pred_depths.append(denorm_pred)
         
         # Iterate over each sample in the batch
-        for i in range(images.shape[0]):
+        for i in range(1): #images.shape[0]
             true_depth = denorm_true[i]
             pred_depth = denorm_pred[i]
+
+            # Squeeze to remove the singleton channel dimension
+            true_depth_squeezed = np.squeeze(true_depth, axis=-1)  # Shape: (height, width)
+            pred_depth_squeezed = np.squeeze(pred_depth, axis=-1)  # Shape: (height, width)
             
             # Generate error map
-            error_map = np.abs(true_depth - pred_depth)
+            error_map = np.abs(true_depth_squeezed - pred_depth_squeezed)
             all_error_maps.append(error_map)
             
             # Visualization and saving
@@ -140,8 +166,8 @@ def main():
                 
                 visualize_and_save_inference_sample(
                     image=image_vis,
-                    true_depth_map=true_depth,
-                    pred_depth_map=pred_depth,
+                    true_depth_map=true_depth_squeezed,
+                    pred_depth_map=pred_depth_squeezed,
                     error_map=error_map,
                     save_path=save_path,
                     mode = model_variant                    
@@ -154,7 +180,7 @@ def main():
                 pred_filename = f"pred_depth_map_batch{batch_idx+1}_sample{i+1}.npy"
                 pred_path = os.path.join(output_dir, 'predictions', pred_filename)
                 os.makedirs(os.path.dirname(pred_path), exist_ok=True)
-                save_depth_map(pred_depth, pred_path)
+                save_depth_map(pred_depth_squeezed, pred_path)
                 print(f"Saved predicted depth map to {pred_path}")
             
             if inference_params.get('save_error_maps', True):
@@ -167,9 +193,9 @@ def main():
                 print(f"Saved error map to {err_map_path}")
 
             # Compute Individual Metrics
-            mse = mean_squared_error(true_depth, pred_depth)
-            mae = mean_absolute_error(true_depth, pred_depth)
-            rmse = np.sqrt(mean_squared_error(true_depth, pred_depth))
+            mse = mean_squared_error(true_depth_squeezed.flatten(), pred_depth_squeezed.flatten())
+            mae = mean_absolute_error(true_depth_squeezed.flatten(), pred_depth_squeezed.flatten())
+            rmse = np.sqrt(mse)
 
             # Save metrics to a file
             metrics_path = os.path.join(output_dir, f'evaluation_metrics{batch_idx+1}_sample{i+1}.txt')
