@@ -108,6 +108,7 @@ def save_error_map(error_map: np.ndarray, save_path: str) -> None:
     - save_path (str): File path to save the image.
     
     """
+    error_map = tf.squeeze(error_map, axis =-1) if error_map.ndim == 3 and error_map.shape[-1] == 1 else error_map
     plt.figure(figsize=(8, 6))
     
     cmap = sns.color_palette("icefire", as_cmap=True)
@@ -130,9 +131,10 @@ def visualize_and_save_inference_sample(image: np.ndarray, true_depth_map: np.nd
       Visualizes and saves the true depth map, predicted depth map, and error map for rel_z, and rel_z_pitch_roll models
     
     """
-    true_depth_map = tf.squeeze(true_depth_map, axis=-1)
-    pred_depth_map = tf.squeeze(pred_depth_map, axis=-1)
-    
+    true_depth_map = tf.squeeze(true_depth_map, axis=-1) if true_depth_map.ndim == 3 and true_depth_map.shape[-1] == 1 else true_depth_map
+    pred_depth_map = tf.squeeze(pred_depth_map, axis=-1) if pred_depth_map.ndim == 3 and pred_depth_map.shape[-1] == 1 else pred_depth_map
+    error_map = tf.squeeze(error_map, axis=-1) if error_map.ndim == 3 and error_map.shape[-1] == 1 else error_map
+
     if mode == "vanilla":
         plt.figure(figsize=(15, 10))
                     
@@ -208,7 +210,7 @@ def visualize_sample(image: np.ndarray, depth_map: np.ndarray, mask: np.ndarray,
     Visualizes the image, depth map, and their overlay depending on the mode selected.
     """
 
-    depth_map = tf.squeeze(depth_map, axis=-1)
+    depth_map = tf.squeeze(depth_map, axis=-1) if depth_map.ndim == 3 and depth_map.shape[-1] == 1 else depth_map
 
     if mode == "all":
         if image is None or depth_map is None:
