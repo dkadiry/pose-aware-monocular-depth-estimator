@@ -156,6 +156,11 @@ class DownscaleBlock(layers.Layer):
         self, filters, kernel_size=(3, 3), padding="same", strides=1, name=None, **kwargs
     ):
         super().__init__(name=name, **kwargs)
+        self.filters = filters  # Store as instance variable
+        self.kernel_size = kernel_size
+        self.padding = padding
+        self.strides = strides
+
         self.convA = layers.Conv2D(filters, kernel_size, strides, padding)
         self.convB = layers.Conv2D(filters, kernel_size, strides, padding)
         self.reluA = layers.LeakyReLU(alpha=0.2)
@@ -207,6 +212,11 @@ class UpscaleBlock(layers.Layer):
         self, filters, kernel_size=(3, 3), padding="same", strides=1, name=None, **kwargs
     ):
         super().__init__(name=name, **kwargs)
+        self.filters = filters  # Store as instance variable
+        self.kernel_size = kernel_size
+        self.padding = padding
+        self.strides = strides
+
         self.us = layers.UpSampling2D((2, 2))
         self.convA = layers.Conv2D(filters, kernel_size, strides, padding)
         self.convB = layers.Conv2D(filters, kernel_size, strides, padding)
@@ -259,6 +269,11 @@ class BottleNeckBlock(layers.Layer):
         self, filters, kernel_size=(3, 3), padding="same", strides=1, name=None, **kwargs
     ):
         super().__init__(name=name, **kwargs)
+        self.filters = filters  # Store as instance variable
+        self.kernel_size = kernel_size
+        self.padding = padding
+        self.strides = strides
+
         self.convA = layers.Conv2D(filters, kernel_size, strides, padding)
         self.convB = layers.Conv2D(filters, kernel_size, strides, padding)
         self.reluA = layers.LeakyReLU(alpha=0.2)
