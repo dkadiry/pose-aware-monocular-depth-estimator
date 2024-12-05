@@ -316,7 +316,7 @@ def main():
     # Define callbacks list
     callbacks = [checkpoint_cb, early_stopping_cb, tensorboard_cb]
     
-
+   
     # Train the model
     history = model.fit(
         train_dataset,
@@ -330,6 +330,9 @@ def main():
     os.makedirs(saved_model_dir, exist_ok=True)
     model.save(saved_model_dir)
     print(f"Model saved to {saved_model_dir}")
+    
+   
+    
 
        
     
