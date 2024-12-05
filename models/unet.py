@@ -127,6 +127,26 @@ class DepthEstimationModel(tf.keras.Model):
 
         # Final output layer
         return self.conv_layer(u4)
+   
+    def get_config(self):
+        """
+        Returns the config of the model. This is used for serialization.
+        """
+        config = super(DepthEstimationModel, self).get_config()
+        config.update({
+            'width': self.width,
+            'height': self.height,
+            'input_channels': self.input_channels,
+            # Include other necessary attributes if any
+        })
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        """
+        Creates a model from its config. This is used for deserialization.
+        """
+        return cls(**config)
 
 
 class DownscaleBlock(layers.Layer):
@@ -163,6 +183,21 @@ class DownscaleBlock(layers.Layer):
         # Pooling
         p = self.pool(x)
         return x, p
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'filters': self.filters,
+            'kernel_size': self.kernel_size,
+            'padding': self.padding,
+            'strides': self.strides,
+            'name': self.name,
+        })
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
 class UpscaleBlock(layers.Layer):
@@ -200,6 +235,21 @@ class UpscaleBlock(layers.Layer):
         x = self.reluB(x)
 
         return x
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'filters': self.filters,
+            'kernel_size': self.kernel_size,
+            'padding': self.padding,
+            'strides': self.strides,
+            'name': self.name,
+        })
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
 class BottleNeckBlock(layers.Layer):
@@ -222,6 +272,20 @@ class BottleNeckBlock(layers.Layer):
         x = self.reluB(x)
         return x
 
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'filters': self.filters,
+            'kernel_size': self.kernel_size,
+            'padding': self.padding,
+            'strides': self.strides,
+            'name': self.name,
+        })
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 def build_depth_estimation_model(width, height):
     """Helper function to build the DepthEstimationModel."""
