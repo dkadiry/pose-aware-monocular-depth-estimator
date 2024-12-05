@@ -66,23 +66,23 @@ def main():
         return
     
     try:
-        model = tf.keras.models.load_model(
+        saved_model = tf.keras.models.load_model(
             saved_model_path,
-            custom_objects={
-                'DepthEstimationModel': DepthEstimationModel,
-                'DownscaleBlock': DownscaleBlock,
-                'UpscaleBlock': UpscaleBlock,
-                'BottleNeckBlock': BottleNeckBlock
-            })
+            #custom_objects={
+            #    'DepthEstimationModel': DepthEstimationModel,
+            #    'DownscaleBlock': DownscaleBlock,
+            #    'UpscaleBlock': UpscaleBlock,
+            #    'BottleNeckBlock': BottleNeckBlock
+            #}
+            )
         print(f"Loaded model from {saved_model_path}")
-        model.summary()
+        saved_model.summary()
     except Exception as e:
         print(f"Error loading SavedModel: {e}")
         return
     
+
     
-    
-    """
 
     # Initialize model based on model_variant 'vanilla' 'rel_z' or 'rel_z_pitch_roll'
     input_shape = model_params['input_shapes'][model_variant] 
@@ -105,7 +105,7 @@ def main():
     model.load_weights(checkpoint_file)
     print(f"Loaded weights from {checkpoint_file}")
 
-    """
+    
     
     
     # Load global percentiles
@@ -128,7 +128,7 @@ def main():
     all_error_maps = []
     
     # Iterate over the test dataset and make predictions
-    for batch_idx in range(1): #len(test_dataset)
+    for batch_idx in range(2): #len(test_dataset)
         print(f"Processing batch {batch_idx + 1}/{len(test_dataset)}")
         images, depth_maps = test_dataset[batch_idx]
         
