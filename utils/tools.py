@@ -289,5 +289,55 @@ def denormalize_depth_map_global(normalized_depth: np.ndarray, lower: float, upp
     depth_denormalized = normalized_depth * (upper - lower) + lower
     return depth_denormalized
 
+def log_scale_depth_map(depth_map: np.ndarray, lower: float, upper: float) -> np.ndarray:
+    """
+    Applies logarithmic scaling to the depth map based on global percentiles.
+
+    Parameters:
+    - depth_map (np.ndarray): The original depth map.
+    - lower (float): Global lower percentile value.
+    - upper (float): Global upper percentile value.
+
+    Returns:
+    - np.ndarray: The log-scaled depth map.
+    """
+    # Shift depth map to ensure all values are positive
+    depth_shifted = np.where(depth_map > 0, depth_map - lower + 1e-6, 1e-6)  # Add epsilon to avoid log(0)
+    
+    # Apply logarithmic scaling
+    depth_log = np.log1p(depth_shifted)
+    
+    # Optional: Clip to a maximum log value to prevent extreme values
+    max_log = np.log1p(upper - lower + 1e-6)
+    depth_log = np.clip(depth_log, 0.1, max_log)
+    
+    return depth_log
+
+def denormalize_log_scaled_depth_map(log_scaled_depth: np.ndarray, lower: float, upper: float) -> np.ndarray:
+    """
+    Denormalizes the log-scaled depth map based on global percentiles.
+
+    Parameters:
+    - log_scaled_depth (np.ndarray): Log-scaled depth map.
+    - lower (float): Global lower percentile value.
+    - upper (float): Global upper percentile value.
+
+    Returns:
+    - np.ndarray: Denormalized depth map.
+    """
+    # Compute the maximum log value used during normalization
+    max_log = np.log1p(upper - lower + 1e-6)
+    
+    # Reverse the clipping
+    log_scaled_depth = np.clip(log_scaled_depth, 0.1, max_log)
+    
+    # Reverse the logarithmic scaling
+    depth_shifted = np.expm1(log_scaled_depth)
+    
+    # Reverse the shifting to get the original depth
+    depth_denormalized = depth_shifted + lower - 1e-6  # Subtract epsilon used during scaling
+    
+    return depth_denormalized
+
 if __name__ == "__main__":
     pass
