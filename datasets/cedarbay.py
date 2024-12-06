@@ -338,7 +338,7 @@ def main():
     if len(images) > 0 and len(depth_maps) > 0:
         sample_image = images[0]
         sample_depth_map = depth_maps[0]
-        #sample_mask = masks[0]
+        
     
 
         # Convert image from [0,1] to [0,255] for visualization
