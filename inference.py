@@ -6,7 +6,7 @@ from models.unet import DepthEstimationModel, DownscaleBlock, UpscaleBlock, Bott
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import numpy as np
 import os
-from utils.tools import denormalize_depth_map_global, seed_everything, load_config, save_depth_map
+from utils.tools import denormalize_depth_map_global, seed_everything, load_config, save_depth_map, denormalize_log_scaled_depth_map
 from utils.view_depth import visualize_and_save_inference_sample, save_error_map
 import matplotlib.pyplot as plt
 
@@ -134,9 +134,12 @@ def main():
         predictions = model.predict(images)
         
         # Denormalize depth maps and predictions
-        denorm_true = denormalize_depth_map_global(depth_maps, lower_global, upper_global)
-        denorm_pred = denormalize_depth_map_global(predictions, lower_global, upper_global)
+        #denorm_true = denormalize_depth_map_global(depth_maps, lower_global, upper_global)
+        #denorm_pred = denormalize_depth_map_global(predictions, lower_global, upper_global)
         
+        denorm_true = denormalize_log_scaled_depth_map(depth_maps, lower_global, upper_global)
+        denorm_pred = denormalize_log_scaled_depth_map(predictions, lower_global, upper_global)
+
         # Append to the lists for metric computation
         all_true_depths.append(denorm_true)
         all_pred_depths.append(denorm_pred)
