@@ -61,7 +61,7 @@ class DepthEstimationModel(tf.keras.Model):
         # Structural Similarity (SSIM) loss
         ssim_loss = tf.reduce_mean(
             1 - tf.image.ssim(
-                target, pred, max_val=1.0, filter_size=11, k1=0.01, k2=0.03
+                target, pred, max_val=3.0, filter_size=11, k1=0.01, k2=0.03
             )
         )
 
