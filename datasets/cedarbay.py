@@ -18,7 +18,8 @@ from utils.tools import (
     load_depth_map,
     handle_infs_with_mask,
     normalize_depth_map_global,
-)
+    log_scale_depth_map
+    )
 
 from utils.view_depth import visualize_sample
 import matplotlib.pyplot as plt
@@ -144,8 +145,11 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 #print(f"Sample {sample_idx} - Masked Depth Map Shape: {depth_map_np.shape}")
                 #print(f"Sample {sample_idx} - Masked Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
 
-                # Normalize depth map using global percentiles
-                depth_map_np = normalize_depth_map_global(depth_map_np, self.lower_global, self.upper_global)  # Normalize for visualization
+                # Normalize depth map to [0, 1] using global percentiles
+                #depth_map_np = normalize_depth_map_global(depth_map_np, self.lower_global, self.upper_global)  
+
+                # Apply logarithmic scaling to the depth map using global percentiles
+                depth_map_np = log_scale_depth_map(depth_map_np, self.lower_global, self.upper_global)  # Log-scale normalization
 
                 # Debug: Check normalized depth map
                 #print(f"Sample {sample_idx} - Normalized Depth Map Min: {depth_map_np.min()}, Max: {depth_map_np.max()}")
