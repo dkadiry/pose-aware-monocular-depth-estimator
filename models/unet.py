@@ -302,9 +302,9 @@ class BottleNeckBlock(layers.Layer):
     def from_config(cls, config):
         return cls(**config)
 
-def build_depth_estimation_model(width, height):
+def build_depth_estimation_model(width, height, input_channels):
     """Helper function to build the DepthEstimationModel."""
-    return DepthEstimationModel(width=width, height=height)
+    return DepthEstimationModel(width=width, height=height, input_channels=input_channels)
 
 
 if __name__ == "__main__":
