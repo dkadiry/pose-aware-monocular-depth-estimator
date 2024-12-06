@@ -27,15 +27,18 @@ def overlay_depth_on_image(image: np.ndarray, depth_map: np.ndarray, alpha: floa
     
     Parameters:
     - image (np.ndarray): Original RGB image in [0, 255].
-    - depth_map (np.ndarray): Normalized depth map in [0, 1].
+    - depth_map (np.ndarray): Normalized depth map.
     - alpha (float): Transparency factor.
     - cmap (str): Colormap for depth map.
     
     Returns:
     - np.ndarray: Image with depth overlay.
     """
+    # Rescale depth_map from [0.1, 3.0] to [0, 1]
+    depth_map_normalized = (depth_map - 0.1) / (3.0 - 0.1)
+    depth_map_normalized = np.clip(depth_map_normalized, 0.0, 1.0)  # Ensure values are within [0, 1]
 
-    depth_colored = plt.get_cmap(cmap)(depth_map)[:, :, :3]  # [0,1]
+    depth_colored = plt.get_cmap(cmap)(depth_map_normalized)[:, :, :3]  
     depth_colored = (depth_colored * 255).astype(np.uint8)
     
     # Ensure image is uint8
