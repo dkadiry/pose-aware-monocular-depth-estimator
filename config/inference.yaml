@@ -30,14 +30,14 @@ inference_parameters:
   models:
     vanilla:
       checkpoint_file: 'checkpoints/cedarbay_vanilla/cedarbay_vanilla_model_unet-49.ckpt' 
-      saved_model_path: 'saved_models\cedarbay_vanilla_model_unet'  # Exact path to trained model weights
-      output_dir: 'inference_results\vanilla'  # Directory to save predictions and visualizations
+      saved_model_path: 'saved_models/cedarbay_vanilla_model_unet'  # Exact path to trained model weights
+      output_dir: 'inference_results/vanilla'  # Directory to save predictions and visualizations
     rel_z:
-      saved_model_path: 'saved_models\cedarbay_rel_z_model_unet'  
-      output_dir: 'inference_results\rel_z'  
+      saved_model_path: 'saved_models/cedarbay_rel_z_model_unet'  
+      output_dir: 'inference_results/rel_z'  
     rel_z_pitch_roll:
-      saved_model_path: 'saved_models\cedarbay_rel_z_pitch_roll_model_unet' 
-      output_dir: 'inference_results\rel_z_pitch_roll'  
+      saved_model_path: 'saved_models/cedarbay_rel_z_pitch_roll_model_unet' 
+      output_dir: 'inference_results/rel_z_pitch_roll'  
   visualize: true                # Whether to generate visualizations
   save_predictions: true         # Whether to save prediction maps
   save_error_maps: true          # Whether to save error maps
