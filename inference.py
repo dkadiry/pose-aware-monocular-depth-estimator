@@ -126,7 +126,7 @@ def main():
     all_error_maps = []
     
     # Iterate over the test dataset and make predictions
-    for batch_idx in range(2): #len(test_dataset)
+    for batch_idx in range(len(test_dataset)): #len(test_dataset)
         print(f"Processing batch {batch_idx + 1}/{len(test_dataset)}")
         images, depth_maps = test_dataset[batch_idx]
         
@@ -145,7 +145,7 @@ def main():
         all_pred_depths.append(denorm_pred)
         
         # Iterate over each sample in the batch
-        for i in range(1): #images.shape[0]
+        for i in range(images.shape[0]): #images.shape[0]
             true_depth = denorm_true[i]
             pred_depth = denorm_pred[i]
 
