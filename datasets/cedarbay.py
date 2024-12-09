@@ -219,6 +219,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 # Incorporate pose data if applicable
                 if self.pose_channels > 0:
                     file_id = self.file_ids[sample_idx]
+                    print(f"Sample {sample_idx} - File/Pose Timestamp: {file_id}")
                     pose_data = self.pose_dict.get(file_id, None)
                     if pose_data:
                         pose_channels_encoded = self.encode_pose(pose_data, mask_tensor.numpy())
@@ -282,16 +283,15 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 print(f"Normalization parameters for '{pose_key}' not found. Skipping this pose channel.")
                 continue
             
-            min_val = self.pose_norm_params[pose_key]['min']
-            max_val = self.pose_norm_params[pose_key]['max']
+            mean_val = self.pose_norm_params[pose_key]['mean']
+            std_val = self.pose_norm_params[pose_key]['std']
             
-            # Normalize the pose value to [0, 1]
-            #normalized_value = (pose_data[pose_key] - min_val) / (max_val - min_val)
-            #normalized_value = np.clip(normalized_value, 0.0, 1.0)
+            # Normalize the pose value to [mean=0, std=1]
+            normalized_value = (pose_data[pose_key] - mean_val) / std_val
 
-            # Alternatively, to scale to [-1, 1], use the following:
-            normalized_value = 2 * (pose_data[pose_key] - min_val) / (max_val - min_val) - 1
-            normalized_value = np.clip(normalized_value, -1.0, 1.0)
+            # Clip the values to +-3 Std to handle any outliers
+            normalized_value = np.clip(normalized_value, -3.0, 3.0)
+            print(f"Pre normalized pose value: {pose_data[pose_key]}, Post Normalized Pose value: {normalized_value}")
             
             # Create an image filled with the normalized pose value
             pose_image = np.full((self.target_height, self.target_width), normalized_value, dtype=np.float32)
@@ -427,7 +427,7 @@ def main():
         crop_pixels=crop_pixels,
         shuffle=shuffle,
         pose_csv_path=pose_csv_path, 
-        pose_channels=pose_channels['rel_z_pitch_roll']        
+        pose_channels=pose_channels['rel_z']        
     )
 
     # Fetch a single batch
