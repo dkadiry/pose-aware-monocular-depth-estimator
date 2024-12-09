@@ -218,6 +218,8 @@ def visualize_sample(image: np.ndarray, depth_map: np.ndarray, mask: np.ndarray,
     if mode == "all":
         if image is None or depth_map is None:
             raise ValueError("Both image and depth_map must be provided for 'all' mode.")
+        # Convert image from [0,1] to [0,255] for visualization
+        image = (image * 255).astype(np.uint8)
         overlayed_image = overlay_depth_on_image(image, depth_map, alpha=alpha, cmap=cmap)
         
         plt.figure(figsize=(18, 6))
@@ -253,6 +255,8 @@ def visualize_sample(image: np.ndarray, depth_map: np.ndarray, mask: np.ndarray,
     elif mode == "image_only":
         if image is None:
             raise ValueError("image must be provided for 'image_only' mode.")
+        # Convert image from [0,1] to [0,255] for visualization
+        image = (image * 255).astype(np.uint8)
         plt.figure(figsize=(8, 6))
         plt.imshow(image)
         plt.title(title_image)
@@ -272,6 +276,9 @@ def visualize_sample(image: np.ndarray, depth_map: np.ndarray, mask: np.ndarray,
     elif mode == "all_with_mask":
         if image is None or depth_map is None or mask is None:
             raise ValueError("Image, depth_map, and mask must be provided for 'all_with_mask' mode.")
+        
+        # Convert image from [0,1] to [0,255] for visualization
+        image = (image * 255).astype(np.uint8)
         overlayed_image = overlay_depth_on_image(image, depth_map, alpha=alpha, cmap=cmap)
         
         plt.figure(figsize=(24, 6))
@@ -300,6 +307,73 @@ def visualize_sample(image: np.ndarray, depth_map: np.ndarray, mask: np.ndarray,
         
         plt.show()
 
+    elif mode == "all_with_pose":
+        """
+        Visualizes the image, depth map, and pose channels.
+        If there is 1 additional channel, it's displayed as 'rel_z'.
+        If there are 3 additional channels, they're displayed as 'rel_z', 'pitch', 'roll'.
+        """
+        if image is None or depth_map is None:
+            raise ValueError("Image and depth_map must be provided for 'all_with_pose' mode.")
+        
+        # Determine the number of pose channels
+        num_pose_channels = image.shape[-1] - 3  # Assuming first 3 channels are RGB
+        
+        if num_pose_channels < 1:
+            raise ValueError("No pose channels found in the image for 'all_with_pose' mode.")
+        
+        # Extract RGB and pose channels
+        rgb_image = image[:, :, :3]
+        pose_channels = image[:, :, 3:]
+
+        # Convert image from [0,1] to [0,255] for visualization
+        rgb_image = (rgb_image * 255).astype(np.uint8)
+        
+        # Overlay depth on RGB image
+        overlayed_image = overlay_depth_on_image(rgb_image, depth_map, alpha=alpha, cmap=cmap)
+        
+        # Setup the plot based on the number of pose channels
+        if num_pose_channels == 1:
+            pose_names = ['rel_z']
+        elif num_pose_channels == 3:
+            pose_names = ['rel_z', 'pitch', 'roll']
+        else:
+            # For unexpected number of pose channels, name them generically
+            pose_names = [f'pose_{i+1}' for i in range(num_pose_channels)]
+            print(f"Warning: Expected 1 or 3 pose channels, but found {num_pose_channels}. Naming them as {pose_names}.")
+        
+        total_plots = 3 + num_pose_channels  # RGB, Depth, Overlay, Pose channels
+        plt.figure(figsize=(6 * total_plots, 6))
+        
+        # Plot RGB Image
+        plt.subplot(1, total_plots, 1)
+        plt.imshow(rgb_image)
+        plt.title(title_image)
+        plt.axis('off')
+        
+        # Plot Depth Map
+        plt.subplot(1, total_plots, 2)
+        plt.imshow(depth_map, cmap=cmap)
+        plt.title(title_depth)
+        plt.axis('off')
+        plt.colorbar(label='Depth')
+        
+        # Plot Overlayed Image
+        plt.subplot(1, total_plots, 3)
+        plt.imshow(overlayed_image)
+        plt.title(title_overlay)
+        plt.axis('off')
+        
+        # Plot each Pose Channel
+        for i in range(num_pose_channels):
+            plt.subplot(1, total_plots, 4 + i)
+            plt.imshow(pose_channels[:, :, i], cmap='viridis')  # Choose a suitable colormap
+            plt.title(f"Pose: {pose_names[i]}")
+            plt.axis('off')
+            plt.colorbar(label='Normalized Value')
+        
+        plt.tight_layout()
+        plt.show()
 
     else:
         raise ValueError("Invalid mode selected. Choose from 'all', 'depth_only', 'image_only', 'mask_only', 'all_with_mask'.")
