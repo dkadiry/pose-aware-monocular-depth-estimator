@@ -214,12 +214,12 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 image = tf.where(tf.expand_dims(mask_tensor, axis=-1) > 0, image, tf.zeros_like(image))
 
                 # Debug: Check image before concantenating pose
-                print(f"Sample {sample_idx} - Image Shape before adding pose: {image.shape}")
+                #print(f"Sample {sample_idx} - Image Shape before adding pose: {image.shape}")
 
                 # Incorporate pose data if applicable
                 if self.pose_channels > 0:
                     file_id = self.file_ids[sample_idx]
-                    print(f"Sample {sample_idx} - File/Pose Timestamp: {file_id}")
+                    #print(f"Sample {sample_idx} - File/Pose Timestamp: {file_id}")
                     pose_data = self.pose_dict.get(file_id, None)
                     if pose_data:
                         pose_channels_encoded = self.encode_pose(pose_data, mask_tensor.numpy())
@@ -227,7 +227,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                             # Concatenate pose channels to the image
                             image = tf.concat([image, pose_channels_encoded], axis=-1)
                             # Debug: Check image after concantenating pose
-                            print(f"Sample {sample_idx} - Image Shape after adding pose: {image.shape}")
+                            #print(f"Sample {sample_idx} - Image Shape after adding pose: {image.shape}")
                     else:
                         print(f"Pose data missing for file ID: {file_id}")
                 
@@ -291,7 +291,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
 
             # Clip the values to +-3 Std to handle any outliers
             normalized_value = np.clip(normalized_value, -3.0, 3.0)
-            print(f"Pre normalized pose value: {pose_data[pose_key]}, Post Normalized Pose value: {normalized_value}")
+            #print(f"Pre normalized pose value: {pose_data[pose_key]}, Post Normalized Pose value: {normalized_value}")
             
             # Create an image filled with the normalized pose value
             pose_image = np.full((self.target_height, self.target_width), normalized_value, dtype=np.float32)
