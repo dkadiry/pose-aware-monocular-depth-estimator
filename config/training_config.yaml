@@ -11,12 +11,13 @@ dataset_parameters:
   test_ratio: 0.05
   shuffle: True
   crop_pixels: 120  # Based on empirical analysis
-  pose_csv_path: 'data/cedarbay/computed_FFC_relative_pose_data.csv'  # Path to pose CSV
+  pose_csv_path: 'data/cedarbay/Filtered_Relative_FFC_Pose_Euler.csv'  # Path to pose CSV
   pose_channels:
     vanilla: 0  # No pose channels for vanilla model
     rel_z: 1  # Relative Z for Model 2
     rel_z_pitch_roll: 3  # Relative Z, Pitch, Roll for Model 3
   percentiles_path: 'utils/percentiles.npz'
+  pose_normalization_params_path: "data/cedarbay/pose_normalization_params.json"
 
 experiment_parameters:
   model_variant: 'vanilla' # 'vanilla', 'rel_z' or 'rel_z_pitch_roll'
