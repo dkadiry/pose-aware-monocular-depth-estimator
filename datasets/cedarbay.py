@@ -24,7 +24,22 @@ from utils.tools import (
 from utils.view_depth import visualize_sample
 import matplotlib.pyplot as plt
 import cv2
+from scipy.ndimage import gaussian_filter
+import json
 
+def create_gaussian_mask(height: int, width: int, sigma: float = None) -> np.ndarray:
+    """
+    Creates a 2D Gaussian mask.
+    """
+    if sigma is None:
+        sigma = width / 6  # Common heuristic
+
+    x = np.linspace(-1, 1, width)
+    y = np.linspace(-1, 1, height)
+    xv, yv = np.meshgrid(x, y)
+    d = np.sqrt(xv**2 + yv**2)
+    gaussian = np.exp(-(d**2) / (2 * (sigma / width)**2))
+    return gaussian
 
 class CedarBayDataset(tf.keras.utils.Sequence):
     def __init__(
@@ -35,6 +50,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         target_height: int,
         target_width: int,
         percentiles_path: str,
+        pose_normalization_params_path: str,
         crop_pixels: int = 0,
         shuffle: bool = True,
         pose_csv_path: str = None,
@@ -50,11 +66,13 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         - batch_size (int): Number of samples per batch.
         - target_height (int): Height after resizing.
         - target_width (int): Width after resizing.
+        - percentiles_path (str): Path to the percentiles npz
+        - pose_normalization_params_path (str): Path to the pose normalization JSON file.
         - crop_pixels (int): Number of pixels to crop from the bottom.
         - shuffle (bool): Whether to shuffle the dataset each epoch.
         - pose_csv_path (str): Path to the pose data CSV file.
         - pose_channels (int): Number of pose channels to include (0, 1, or 3).
-        - percentiles_path (str): Path to the percentiles npz
+        - subset_indices (List[int]): Indices to include in the dataset subset. (Used when generating specifically Training, Validation, and Test Sets)
         """
 
         self.images_folder = images_folder
@@ -66,6 +84,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         self.shuffle = shuffle
         self.pose_channels = pose_channels
         self.percentiles_path = percentiles_path
+        self.pose_normalization_params_path = pose_normalization_params_path
 
         # Load file lists
         self.image_files = get_images_from_directory(images_folder)
@@ -92,6 +111,16 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         self.lower_global = percentiles['P1']
         self.upper_global = percentiles['P99']
         print(f"Loaded Global Percentiles - P1: {self.lower_global}, P99: {self.upper_global}")
+
+        # Load pose normalization parameters
+        if self.pose_channels > 0:
+            if not os.path.exists(self.pose_normalization_params_path):
+                raise FileNotFoundError(f"Pose normalization params file not found at: {self.pose_normalization_params_path}")
+            with open(self.pose_normalization_params_path, 'r') as json_file:
+                self.pose_norm_params = json.load(json_file)
+            print(f"Loaded Pose Normalization Parameters: {self.pose_norm_params}")
+        else:
+            self.pose_norm_params = {}
 
         # Handle subset indices
         if subset_indices is not None:
@@ -184,24 +213,20 @@ class CedarBayDataset(tf.keras.utils.Sequence):
                 # Apply mask to the image: set invalid regions to zero
                 image = tf.where(tf.expand_dims(mask_tensor, axis=-1) > 0, image, tf.zeros_like(image))
 
+                # Debug: Check image before concantenating pose
+                print(f"Sample {sample_idx} - Image Shape before adding pose: {image.shape}")
+
                 # Incorporate pose data if applicable
                 if self.pose_channels > 0:
                     file_id = self.file_ids[sample_idx]
                     pose_data = self.pose_dict.get(file_id, None)
                     if pose_data:
-                        if self.pose_channels == 1:
-                            pose_channel = tf.constant([pose_data['relative_z']], dtype=tf.float32)
-                        elif self.pose_channels == 3:
-                            pose_channel = tf.constant([pose_data['relative_z'], pose_data['pitch'], pose_data['roll']], dtype=tf.float32)
-                        else:
-                            pose_channel = tf.constant([], dtype=tf.float32)
-                        
-                        # Expand dimensions to match (height, width, channels)
-                        pose_channel = tf.tile(pose_channel, [self.target_height * self.target_width])
-                        pose_channel = tf.reshape(pose_channel, [self.target_height, self.target_width, self.pose_channels])
-
-                        # Concatenate pose channels to the image
-                        image = tf.concat([image, pose_channel], axis=-1)
+                        pose_channels_encoded = self.encode_pose(pose_data, mask_tensor.numpy())
+                        if pose_channels_encoded is not None:
+                            # Concatenate pose channels to the image
+                            image = tf.concat([image, pose_channels_encoded], axis=-1)
+                            # Debug: Check image after concantenating pose
+                            print(f"Sample {sample_idx} - Image Shape after adding pose: {image.shape}")
                     else:
                         print(f"Pose data missing for file ID: {file_id}")
                 
@@ -223,6 +248,78 @@ class CedarBayDataset(tf.keras.utils.Sequence):
     def get_num_samples(self) -> int:
         """ Returns number of samples in the dataset """
         return len(self.indices)
+    
+    def encode_pose(self, pose_data: Dict[str, Any], mask: np.ndarray) -> tf.Tensor:
+        """
+        Encodes and normalizes pose data into image channels.
+        
+        Parameters:
+        - pose_data (Dict[str, Any]): Dictionary containing pose values.
+        - mask (np.ndarray): Mask array to apply to pose images.
+        
+        Returns:
+        - tf.Tensor: Tensor containing encoded pose channels.
+        """
+        pose_channels = []
+        pose_keys = []
+        
+        # Determine which pose keys to process based on pose_channels
+        if self.pose_channels == 1:
+            pose_keys = ['tz']
+        elif self.pose_channels == 3:
+            pose_keys = ['tz', 'pitch', 'roll']
+        else:
+            raise ValueError("pose_channels must be either 1 or 3.")
+        
+        # Create Gaussian mask
+        gaussian_mask = create_gaussian_mask(self.target_height, self.target_width, sigma=700)  # Adjust sigma as needed
+
+        # Combine Gaussian mask with validity mask to ensure it only affects valid regions
+        combined_mask = gaussian_mask * mask  # Element-wise multiplication
+
+        for pose_key in pose_keys:
+            if pose_key not in self.pose_norm_params:
+                print(f"Normalization parameters for '{pose_key}' not found. Skipping this pose channel.")
+                continue
+            
+            min_val = self.pose_norm_params[pose_key]['min']
+            max_val = self.pose_norm_params[pose_key]['max']
+            
+            # Normalize the pose value to [0, 1]
+            #normalized_value = (pose_data[pose_key] - min_val) / (max_val - min_val)
+            #normalized_value = np.clip(normalized_value, 0.0, 1.0)
+
+            # Alternatively, to scale to [-1, 1], use the following:
+            normalized_value = 2 * (pose_data[pose_key] - min_val) / (max_val - min_val) - 1
+            normalized_value = np.clip(normalized_value, -1.0, 1.0)
+            
+            # Create an image filled with the normalized pose value
+            pose_image = np.full((self.target_height, self.target_width), normalized_value, dtype=np.float32)
+            
+            # Apply mask: set invalid regions to zero
+            #pose_image = np.where(mask > 0, pose_image, 0.0)
+
+            # Apply Gaussian spatial modulation
+            pose_image *= combined_mask # Emphasize central values
+            
+            # Optional: Apply Gaussian wsmoothing
+            #pose_image = gaussian_filter(pose_image, sigma=1)  # Adjust sigma as needed
+            
+            # Expand dimensions to match (height, width, 1)
+            pose_image = pose_image[..., np.newaxis]
+            
+            # Convert to tensor
+            pose_tensor = tf.convert_to_tensor(pose_image, dtype=tf.float32)
+            
+            pose_channels.append(pose_tensor)
+        
+        if pose_channels:
+            # Concatenate all pose channels along the last axis
+            encoded_pose = tf.concat(pose_channels, axis=-1)
+            return encoded_pose
+        else:
+            return None
+
 
 
 class SubsetCedarBayDataset(CedarBayDataset):
@@ -307,6 +404,7 @@ def main():
     percentiles = dataset_params.get('percentiles_path')
     pose_csv_path = dataset_params.get('pose_csv_path')
     pose_channels = dataset_params.get('pose_channels', {})
+    pose_norm_path = dataset_params.get('pose_normalization_params_path')
     
 
     # Validate essential paths
@@ -325,10 +423,11 @@ def main():
         target_height=target_height,
         target_width=target_width,
         percentiles_path=percentiles,
+        pose_normalization_params_path= pose_norm_path,
         crop_pixels=crop_pixels,
         shuffle=shuffle,
         pose_csv_path=pose_csv_path, 
-        pose_channels=pose_channels['vanilla']        
+        pose_channels=pose_channels['rel_z_pitch_roll']        
     )
 
     # Fetch a single batch
@@ -342,14 +441,9 @@ def main():
     if len(images) > 0 and len(depth_maps) > 0:
         sample_image = images[0]
         sample_depth_map = depth_maps[0]
-        
-    
-
-        # Convert image from [0,1] to [0,255] for visualization
-        sample_image_vis = (sample_image * 255).astype(np.uint8)
 
         visualize_sample(
-            image=sample_image_vis,
+            image=sample_image,
             depth_map=sample_depth_map,
             mask=None,
             cmap='plasma',
@@ -358,7 +452,7 @@ def main():
             title_depth="Sample Normalized Depth Map",
             #title_mask="Sample Depth Mask",
             title_overlay="Sample Depth Overlay",
-            mode = "all"
+            mode = "all_with_pose"
         )
     else:
         print("No samples found in the batch.")
