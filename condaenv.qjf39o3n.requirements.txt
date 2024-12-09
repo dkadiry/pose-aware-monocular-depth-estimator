@@ -1,0 +1,13 @@
+chardet==4.0.0
+filetype==1.2.0
+jupyterlab-night==0.4.6
+libclang==18.1.1
+opencv-python==4.9.0.80
+opencv-python-headless==4.10.0.84
+protobuf==3.19.6
+pyarrow==17.0.0
+python-dotenv==1.0.1
+requests-toolbelt==1.0.0
+rerun-sdk==0.18.2
+roboflow==1.1.37
+tensorflow-io-gcs-filesystem==0.31.0
