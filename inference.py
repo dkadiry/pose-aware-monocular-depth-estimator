@@ -49,6 +49,7 @@ def main():
         target_height=dataset_params['image_height'],
         target_width=dataset_params['image_width'],
         percentiles_path=dataset_params['percentiles_path'],
+        pose_normalization_params_path=dataset_params['pose_normalization_params_path'],
         crop_pixels=dataset_params['crop_pixels'],
         shuffle=False,  # No shuffling for inference
         pose_csv_path=dataset_params['pose_csv_path'],
