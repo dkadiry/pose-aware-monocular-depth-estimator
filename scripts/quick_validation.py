@@ -23,7 +23,6 @@ def main():
     config = load_config(config_path)
     
     dataset_params = config['dataset_parameters']
-    model_params = config['model_parameters']
     inference_params = config['inference_parameters']
     
     model_variant = inference_params['model_variant']
@@ -47,7 +46,7 @@ def main():
         return
     
     # Create a dummy input matching the model's expected input shape
-    input_shape = model.input_shape  # Should be (None, height, width, channels)
+    input_shape = (None, 768, 1024, 3)  # Should be (None, height, width, channels)
     height = input_shape[1]
     width = input_shape[2]
     channels = input_shape[3]
