@@ -17,7 +17,7 @@ dataset_parameters:
     rel_z: 1  # Relative Z for Model 2
     rel_z_pitch_roll: 3  # Relative Z, Pitch, Roll for Model 3
   percentiles_path: 'utils/percentiles.npz'
-  pose_normalization_params_path: "data/cedarbay/pose_normalization_params.json"
+  pose_normalization_params_path: "data/cedarbay/pose_stats.json"
 
 experiment_parameters:
   model_variant: 'vanilla' # 'vanilla', 'rel_z' or 'rel_z_pitch_roll'
