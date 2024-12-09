@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import os
 from utils.tools import seed_everything, load_config
+from tensorflow.keras import layers, models # type: ignore
 
 from datetime import datetime  # Import datetime for timestamp generation
 
@@ -57,6 +58,7 @@ def main():
         target_height=dataset_params['image_height'],
         target_width=dataset_params['image_width'],
         percentiles_path=dataset_params['percentiles_path'],
+        pose_normalization_params_path=dataset_params['pose_normalization_params_path'],
         crop_pixels=dataset_params['crop_pixels'],
         shuffle=dataset_params['shuffle'],
         pose_csv_path=dataset_params['pose_csv_path'],
@@ -119,6 +121,7 @@ def main():
         target_height=dataset_params['image_height'],
         target_width=dataset_params['image_width'],
         percentiles_path=dataset_params['percentiles_path'],
+        pose_normalization_params_path=dataset_params['pose_normalization_params_path'],
         crop_pixels=dataset_params['crop_pixels'],
         shuffle=dataset_params['shuffle'],
         pose_csv_path=dataset_params['pose_csv_path'],
@@ -133,6 +136,7 @@ def main():
         target_height=dataset_params['image_height'],
         target_width=dataset_params['image_width'],
         percentiles_path=dataset_params['percentiles_path'],
+        pose_normalization_params_path=dataset_params['pose_normalization_params_path'],
         crop_pixels=dataset_params['crop_pixels'],
         shuffle=False,  
         pose_csv_path=dataset_params['pose_csv_path'],
@@ -147,6 +151,7 @@ def main():
         target_height=dataset_params['image_height'],
         target_width=dataset_params['image_width'],
         percentiles_path=dataset_params['percentiles_path'],
+        pose_normalization_params_path=dataset_params['pose_normalization_params_path'],
         crop_pixels=dataset_params['crop_pixels'],
         shuffle=False,  
         pose_csv_path=dataset_params['pose_csv_path'],
@@ -161,10 +166,10 @@ def main():
     assert len(np.intersect1d(train_indices, test_indices)) == 0, "Training and Test sets overlap!"
     assert len(np.intersect1d(val_indices, test_indices)) == 0, "Validation and Test sets overlap!"
 
-    #for images, depth_maps in train_dataset:
-    #    print("Images shape:", images.shape)        # Expected: (batch_size, height, width, channels + pose_channels)
-    #    print("Depth maps shape:", depth_maps.shape) # Expected: (batch_size, height, width, 1)
-    #    break  # Only inspect the first batch
+    for images, depth_maps in train_dataset:
+        print("Images shape:", images.shape)        # Expected: (batch_size, height, width, channels + pose_channels)
+        print("Depth maps shape:", depth_maps.shape) # Expected: (batch_size, height, width, 1)
+        break  # Only inspect the first batch
 
     # Initialize model vanilla, rel_z, or rel_z_pitch_roll
     input_shape = model_params['input_shapes'][model_variant]  # [768, 1024, 3]
@@ -192,10 +197,12 @@ def main():
     model.compile(optimizer=optimizer)
     print("Model compiled successfully.")
 
-    # Load the pre-trained model
-    pretrained_model_path = 'saved_models/diode_model_unet_100_v4'
 
+    # Transfer weights
     try:
+        # Load the pre-trained model
+        pretrained_model_path = 'saved_models/diode_model_unet_100_v4'
+        
         pretrained_model = tf.keras.models.load_model(
             pretrained_model_path,
             custom_objects={
@@ -206,65 +213,81 @@ def main():
             }
         )
         print("Pre-trained model loaded successfully.")
-    except Exception as e:
-        print(f"Error loading pre-trained model: {e}")
-        return
-
-    # Transfer weights
-    try:
-        # Get weights from the pre-trained model
-        pretrained_weights = pretrained_model.get_weights()
-        # Get weights from the current model
-        current_weights = model.get_weights()
-
-        pretrained_model_input_channels = 3
-
-        # If input channels differ, adjust the weights of the first Conv2D layer
-        if model.input_channels != pretrained_model_input_channels:
-            print("Adjusting weights for input channels...")
-            # Verify weight shapes
-            print(f"Pre-trained first Conv2D weights shape: {pretrained_weights[0].shape}")  # (kernel_h, kernel_w, in_channels, filters)
-            print(f"Current first Conv2D weights shape: {current_weights[0].shape}")
-
-            pretrained_first_layer_weights = pretrained_weights[0]
-            pretrained_first_layer_bias = pretrained_weights[1]
-
-            n_extra_channels = model.input_channels - pretrained_model_input_channels
-            if n_extra_channels > 0:
-                # Initialize new channel weights with small random values
-                new_channels_shape = list(pretrained_first_layer_weights.shape)
-                new_channels_shape[2] = n_extra_channels  # Adjust the input channel dimension
-                new_channels_weights = np.random.normal(
-                    loc=0.0, scale=0.01, size=new_channels_shape
-                )
-
-                # Concatenate along the input channel dimension
-                adjusted_first_layer_weights = np.concatenate(
-                    [pretrained_first_layer_weights, new_channels_weights],
-                    axis=2
-                )
-            elif n_extra_channels < 0:
-                # Slice the weights to match the reduced input channels
-                adjusted_first_layer_weights = pretrained_first_layer_weights[:, :, :model.input_channels, :]
-            else:
-                # Input channels are the same
-                adjusted_first_layer_weights = pretrained_first_layer_weights
-                   
-            # Replace the weights in the current model
-            current_weights[0] = adjusted_first_layer_weights
-            current_weights[1] = pretrained_first_layer_bias
-
-            # Copy the rest of the weights
-            current_weights[2:] = pretrained_weights[2:]
         
-        else:
-            # If input channels are the same, copy all weights
-            current_weights = pretrained_weights
+        # Define a mapping from pre-trained model layer names to current model layer names
+        layer_name_mapping = {
+            'downscale_block': 'downscale_block_0',
+            'downscale_block_1': 'downscale_block_1',
+            'downscale_block_2': 'downscale_block_2',
+            'downscale_block_3': 'downscale_block_3',
+            'bottle_neck_block': 'bottleneck_block',
+            'upscale_block': 'upscale_block_0',
+            'upscale_block_1': 'upscale_block_1',
+            'upscale_block_2': 'upscale_block_2',
+            'upscale_block_3': 'upscale_block_3',
+            'conv2d_18': 'final_conv'
+        }
         
-        # Set the weights to the current model
-        model.set_weights(current_weights)
-        print("Weights transferred successfully.")
-
+        # Iterate over the mapping and transfer weights
+        for pretrained_layer_name, current_layer_name in layer_name_mapping.items():
+            try:
+                # Access the pre-trained layer
+                pretrained_layer = pretrained_model.get_layer(pretrained_layer_name)
+                
+                # Access the corresponding current model layer
+                current_layer = model.get_layer(current_layer_name)
+                
+                # Check if the layer is the first Conv2D layer that requires channel adjustment
+                if pretrained_layer_name == 'downscale_block':
+                    print("Adjusting weights for the first Conv2D layer due to input channel difference...")
+                    
+                    # Retrieve weights and biases from the pre-trained layer
+                    pretrained_weights = pretrained_layer.convA.get_weights()[0]  # Shape: (3, 3, 3, 16)
+                    pretrained_bias = pretrained_layer.convA.get_weights()[1]     # Shape: (16,)
+                    
+                    # Current model's input channels
+                    current_input_channels = model.input_channels  # e.g., 4
+                    
+                    # Number of extra channels to add
+                    n_extra_channels = current_input_channels - pretrained_weights.shape[2]  # 4 - 3 = 1
+                    
+                    if n_extra_channels > 0:
+                        # Initialize new channel weights with small random values
+                        new_channels_shape = (pretrained_weights.shape[0], pretrained_weights.shape[1], n_extra_channels, pretrained_weights.shape[3])
+                        new_channels_weights = np.random.normal(loc=0.0, scale=0.01, size=new_channels_shape)
+                        
+                        # Concatenate the new channels to the pre-trained weights
+                        adjusted_weights = np.concatenate([pretrained_weights, new_channels_weights], axis=2)  # Shape: (3, 3, 4, 16)
+                        
+                        # Assign the adjusted weights and original biases to the current layer
+                        current_layer.convA.set_weights([adjusted_weights, pretrained_bias])
+                        print(f"Adjusted weights for '{current_layer_name}' with new input channels.")
+                    
+                    elif n_extra_channels < 0:
+                        # Slice the weights to match the reduced input channels
+                        adjusted_weights = pretrained_weights[:, :, :current_input_channels, :]  # Shape: (3, 3, 2, 16) if n_extra_channels = -1
+                        current_layer.convA.set_weights([adjusted_weights, pretrained_bias])
+                        print(f"Sliced weights for '{current_layer_name}' to match reduced input channels.")
+                    
+                    else:
+                        # Input channels are the same; transfer weights directly
+                        current_layer.convA.set_weights([pretrained_weights, pretrained_bias])
+                        print(f"Transferred weights directly for '{current_layer_name}' (no channel adjustment needed).")
+                
+                else:
+                    # For all other layers, transfer weights directly
+                    pretrained_weights = pretrained_layer.get_weights()
+                    current_layer.set_weights(pretrained_weights)
+                    print(f"Weights transferred for layer: '{pretrained_layer_name}' -> '{current_layer_name}'")
+            
+            except ValueError as ve:
+                print(f"ValueError for layer '{pretrained_layer_name}': {ve}")
+            except AttributeError as ae:
+                print(f"AttributeError for layer '{pretrained_layer_name}': {ae}")
+            except Exception as e:
+                print(f"Unexpected error for layer '{pretrained_layer_name}': {e}")
+        
+        print("All weights transferred successfully.")
 
     except Exception as e:
         print(f"Error transferring weights: {e}")
@@ -315,7 +338,7 @@ def main():
 
     # Define callbacks list
     callbacks = [checkpoint_cb, early_stopping_cb, tensorboard_cb]
-      
+    """
     # Train the model
     history = model.fit(
         train_dataset,
@@ -329,6 +352,9 @@ def main():
     os.makedirs(saved_model_dir, exist_ok=True)
     model.save(saved_model_dir)
     print(f"Model saved to {saved_model_dir}")
+
+    """
+    
            
     
 
