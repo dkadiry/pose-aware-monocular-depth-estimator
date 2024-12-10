@@ -61,7 +61,7 @@ def main():
     
     
     # Load the SavedModel
-    saved_model_path = inference_params['models'][model_variant]['saved_model_path']
+    saved_model_path = inference_params['models'][model_variant]['save_best_model_path']
     if not os.path.exists(saved_model_path):
         print(f"SavedModel directory not found: {saved_model_path}")
         return
@@ -82,6 +82,7 @@ def main():
         print(f"Error loading SavedModel: {e}")
         return
     
+    
     """
     # Initialize model based on model_variant 'vanilla' 'rel_z' or 'rel_z_pitch_roll'
     input_shape = model_params['input_shapes'][model_variant] 
@@ -101,10 +102,10 @@ def main():
     if not os.path.exists(checkpoint_file + '.index'):  # TensorFlow saves .index and .data files
         print(f"Checkpoint file not found: {checkpoint_file}")
         return
-    model.load_weights(checkpoint_file)
+    model.load_weights(checkpoint_file).expect_partial()
     print(f"Loaded weights from {checkpoint_file}")
-
     """
+    
     
     
     # Load global percentiles
@@ -161,13 +162,12 @@ def main():
             # Visualization and saving
             if inference_params.get('visualize', True):
                 image = images[i]
-                # Convert image from [0,1] to [0,255] for visualization - This is Only displayed for vanilla model as the pose and scale boosted model images have been concantenated with additional channels.
-                image_vis = (image * 255).astype(np.uint8)
+                
                 save_path = os.path.join(output_dir, f"batch{batch_idx+1}_sample{i+1}.png")
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 
                 visualize_and_save_inference_sample(
-                    image=image_vis,
+                    image=image,
                     true_depth_map=true_depth_squeezed,
                     pred_depth_map=pred_depth_squeezed,
                     error_map=error_map,
@@ -200,7 +200,7 @@ def main():
             rmse = np.sqrt(mse)
 
             # Save metrics to a file
-            metrics_path = os.path.join(output_dir, f'evaluation_metrics{batch_idx+1}_sample{i+1}.txt')
+            metrics_path = os.path.join(output_dir, f'evaluation_metrics_batch{batch_idx+1}_sample{i+1}.txt')
             with open(metrics_path, 'w') as f:
                 f.write(f"Mean Squared Error (MSE): {mse}\n")
                 f.write(f"Mean Absolute Error (MAE): {mae}\n")

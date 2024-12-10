@@ -139,6 +139,8 @@ def visualize_and_save_inference_sample(image: np.ndarray, true_depth_map: np.nd
     error_map = tf.squeeze(error_map, axis=-1) if error_map.ndim == 3 and error_map.shape[-1] == 1 else error_map
 
     if mode == "vanilla":
+        # Convert image from [0,1] to [0,255] for visualization 
+        image = (image * 255).astype(np.uint8)
         plt.figure(figsize=(15, 10))
                     
         plt.subplot(2, 2, 1)
@@ -172,21 +174,39 @@ def visualize_and_save_inference_sample(image: np.ndarray, true_depth_map: np.nd
         print(f"Saved inference result to {save_path}")
 
     elif mode == 'rel_z' or mode == 'rel_z_pitch_roll':
+        # Determine the number of pose channels
+        num_pose_channels = image.shape[-1] - 3  # Assuming first 3 channels are RGB
+        
+        if num_pose_channels < 1:
+            raise ValueError("No pose channels found in the image for 'all_with_pose' mode.")
+        
+        # Extract RGB and pose channels
+        rgb_image = image[:, :, :3]
+        pose_channels = image[:, :, 3:]
+
+        # Convert image from [0,1] to [0,255] for visualization
+        rgb_image = (rgb_image * 255).astype(np.uint8)
+
         plt.figure(figsize=(15, 10))
+
+        plt.subplot(2, 2, 1)
+        plt.title(title_image)
+        plt.imshow(rgb_image)
+        plt.axis('off')
                            
-        plt.subplot(1, 3, 1)
+        plt.subplot(2, 2, 2)
         plt.title(title_pred)
         plt.imshow(pred_depth_map, cmap='plasma')
         plt.colorbar(label='Depth')
         plt.axis('off')
         
-        plt.subplot(1, 3, 2)
+        plt.subplot(2, 2, 3)
         plt.title(title_true)
         plt.imshow(true_depth_map, cmap='plasma')
         plt.colorbar(label='Depth')
         plt.axis('off')
         
-        plt.subplot(1, 3, 3)
+        plt.subplot(2, 2, 4)
         plt.title(title_err)
         err_cmap = sns.color_palette("icefire", as_cmap=True)
         ax = sns.heatmap(error_map, cmap=err_cmap, vmin=-5.0, vmax=5.0, cbar_kws={"label": "Error"})

@@ -20,7 +20,7 @@ dataset_parameters:
   pose_normalization_params_path: "data/cedarbay/pose_stats.json"
 
 experiment_parameters:
-  model_variant: 'rel_z' # 'vanilla', 'rel_z' or 'rel_z_pitch_roll'
+  model_variant: 'rel_z_pitch_roll' # 'vanilla', 'rel_z' or 'rel_z_pitch_roll'
   learning_rate: 0.00001
   epochs: 50
   optimizer: 'adam'
@@ -40,7 +40,7 @@ experiment_parameters:
     rel_z_pitch_roll:
       saved_model_dir: 'saved_models/cedarbay_rel_z_pitch_roll_model_unet'
       checkpoint_dir: 'checkpoints/cedarbay_rel_z_pitch_roll'
-      checkpoint_file: 'checkpoints/cedarbay_rel_z/cedarbay_rel_z_pitch_roll_model_unet-{epoch:02d}.ckpt'
+      checkpoint_file: 'checkpoints/cedarbay_rel_z_pitch_roll/cedarbay_rel_z_pitch_roll_model_unet-{epoch:02d}.ckpt'
   pretrain: True  # Set to True to load pre-trained weights
 
 model_parameters:

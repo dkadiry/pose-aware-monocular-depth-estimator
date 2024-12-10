@@ -273,7 +273,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
             raise ValueError("pose_channels must be either 1 or 3.")
         
         # Create Gaussian mask
-        gaussian_mask = create_gaussian_mask(self.target_height, self.target_width, sigma=700)  # Adjust sigma as needed
+        gaussian_mask = create_gaussian_mask(self.target_height, self.target_width, sigma=600)  # Adjust sigma as needed
 
         # Combine Gaussian mask with validity mask to ensure it only affects valid regions
         combined_mask = gaussian_mask * mask  # Element-wise multiplication
