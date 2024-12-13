@@ -173,7 +173,7 @@ def visualize_and_save_inference_sample(image: np.ndarray, true_depth_map: np.nd
 
         print(f"Saved inference result to {save_path}")
 
-    elif mode == 'rel_z' or mode == 'rel_z_pitch_roll':
+    elif mode == 'rel_z' or mode == 'rel_z_pitch_roll' or mode == "pitch_roll":
         # Determine the number of pose channels
         num_pose_channels = image.shape[-1] - 3  # Assuming first 3 channels are RGB
         
@@ -355,6 +355,8 @@ def visualize_sample(image: np.ndarray, depth_map: np.ndarray, mask: np.ndarray,
         # Setup the plot based on the number of pose channels
         if num_pose_channels == 1:
             pose_names = ['rel_z']
+        elif num_pose_channels == 2:
+            pose_names = ['pitch', 'roll']  
         elif num_pose_channels == 3:
             pose_names = ['rel_z', 'pitch', 'roll']
         else:

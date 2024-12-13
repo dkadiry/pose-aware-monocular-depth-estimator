@@ -253,6 +253,7 @@ def main():
     print('\nSummary Statistics:')
     print(stats)
     
+    """
     # Create plots directory if it doesn't exist
     plots_dir = os.path.join(metrics_dir, 'plots')
     if not os.path.exists(plots_dir):
@@ -275,5 +276,7 @@ def main():
     df_metrics.to_csv(aggregated_csv_path, index=False)
     print(f'\nSaved aggregated metrics to "{aggregated_csv_path}" for model variant "{model_variant}".')
 
+    """
+    
 if __name__ == "__main__":
     main()

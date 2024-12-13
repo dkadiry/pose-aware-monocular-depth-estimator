@@ -71,7 +71,7 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         - crop_pixels (int): Number of pixels to crop from the bottom.
         - shuffle (bool): Whether to shuffle the dataset each epoch.
         - pose_csv_path (str): Path to the pose data CSV file.
-        - pose_channels (int): Number of pose channels to include (0, 1, or 3).
+        - pose_channels (int): Number of pose channels to include (0, 1, 2, or 3).
         - subset_indices (List[int]): Indices to include in the dataset subset. (Used when generating specifically Training, Validation, and Test Sets)
         """
 
@@ -267,10 +267,12 @@ class CedarBayDataset(tf.keras.utils.Sequence):
         # Determine which pose keys to process based on pose_channels
         if self.pose_channels == 1:
             pose_keys = ['tz']
+        elif self.pose_channels == 2:
+            pose_keys = ['pitch', 'roll']
         elif self.pose_channels == 3:
             pose_keys = ['tz', 'pitch', 'roll']
         else:
-            raise ValueError("pose_channels must be either 1 or 3.")
+            raise ValueError("pose_channels must be either 1, 2, or 3.")
         
         # Create Gaussian mask
         gaussian_mask = create_gaussian_mask(self.target_height, self.target_width, sigma=600)  # Adjust sigma as needed
@@ -295,12 +297,15 @@ class CedarBayDataset(tf.keras.utils.Sequence):
             
             # Create an image filled with the normalized pose value
             pose_image = np.full((self.target_height, self.target_width), normalized_value, dtype=np.float32)
-            
-            # Apply mask: set invalid regions to zero
-            #pose_image = np.where(mask > 0, pose_image, 0.0)
 
-            # Apply Gaussian spatial modulation
-            pose_image *= combined_mask # Emphasize central values
+            if pose_key == 'tz':
+                # Apply Gaussian spatial modulation
+                #pose_image *= combined_mask # Emphasize central 
+                pose_image = np.where(mask > 0, pose_image, 0.0)
+                
+            if pose_key == 'pitch' or pose_key == 'roll':
+                # Apply mask: set invalid regions to zero
+                pose_image = np.where(mask > 0, pose_image, 0.0)
             
             # Optional: Apply Gaussian wsmoothing
             #pose_image = gaussian_filter(pose_image, sigma=1)  # Adjust sigma as needed

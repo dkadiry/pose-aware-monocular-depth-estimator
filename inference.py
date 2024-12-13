@@ -61,7 +61,7 @@ def main():
     
     
     # Load the SavedModel
-    saved_model_path = inference_params['models'][model_variant]['save_best_model_path']
+    saved_model_path = inference_params['models'][model_variant]['saved_model_path']
     if not os.path.exists(saved_model_path):
         print(f"SavedModel directory not found: {saved_model_path}")
         return

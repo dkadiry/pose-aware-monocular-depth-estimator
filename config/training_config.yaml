@@ -15,16 +15,17 @@ dataset_parameters:
   pose_channels:
     vanilla: 0  # No pose channels for vanilla model
     rel_z: 1  # Relative Z for Model 2
+    pitch_roll: 2 
     rel_z_pitch_roll: 3  # Relative Z, Pitch, Roll for Model 3
   percentiles_path: 'utils/percentiles.npz'
   pose_normalization_params_path: "data/cedarbay/pose_stats.json"
 
 experiment_parameters:
-  model_variant: 'rel_z_pitch_roll' # 'vanilla', 'rel_z' or 'rel_z_pitch_roll'
+  model_variant: 'rel_z' # 'vanilla', 'rel_z' or 'rel_z_pitch_roll'
   learning_rate: 0.00001
   epochs: 50
   optimizer: 'adam'
-  loss_function: 'mse' # Unsused since we have a custom loss function
+  loss_function: 'mse' # Unused since we have a custom loss function
   metrics:
     - 'mae'
     - 'mse'
@@ -34,19 +35,24 @@ experiment_parameters:
       checkpoint_dir: 'checkpoints/cedarbay_vanilla_v3'
       checkpoint_file: 'checkpoints/cedarbay_vanilla_v3/cedarbay_vanilla_model_v3_unet-{epoch:02d}.ckpt'
     rel_z:
-      saved_model_dir: 'saved_models/cedarbay_rel_z_model_unet'
-      checkpoint_dir: 'checkpoints/cedarbay_rel_z'
-      checkpoint_file: 'checkpoints/cedarbay_rel_z/cedarbay_rel_z_model_unet-{epoch:02d}.ckpt'
+      saved_model_dir: 'saved_models/cedarbay_rel_z_model_unet_nsm'
+      checkpoint_dir: 'checkpoints/cedarbay_rel_z_nsm'
+      checkpoint_file: 'checkpoints/cedarbay_rel_z_nsm/cedarbay_rel_z_nsm_model_unet-{epoch:02d}.ckpt'
+    pitch_roll:
+      saved_model_dir: 'saved_models/cedarbay_pitch_roll_model_unet_nsmpr'
+      checkpoint_dir: 'checkpoints/cedarbay_pitch_roll_nsmpr'
+      checkpoint_file: 'checkpoints/cedarbay_pitch_roll_nsmpr/cedarbay_pitch_roll_model_unet_nsmpr-{epoch:02d}.ckpt'
     rel_z_pitch_roll:
-      saved_model_dir: 'saved_models/cedarbay_rel_z_pitch_roll_model_unet'
-      checkpoint_dir: 'checkpoints/cedarbay_rel_z_pitch_roll'
-      checkpoint_file: 'checkpoints/cedarbay_rel_z_pitch_roll/cedarbay_rel_z_pitch_roll_model_unet-{epoch:02d}.ckpt'
+      saved_model_dir: 'saved_models/cedarbay_rel_z_pitch_roll_model_unet_nsmpr'
+      checkpoint_dir: 'checkpoints/cedarbay_rel_z_pitch_roll_nsmpr'
+      checkpoint_file: 'checkpoints/cedarbay_rel_z_pitch_roll_nsmpr/cedarbay_rel_z_pitch_roll_model_unet_nsmpr-{epoch:02d}.ckpt'
   pretrain: True  # Set to True to load pre-trained weights
 
 model_parameters:
   input_shapes:
     vanilla: [768, 1024, 3]  # image_height x image_width x channels
     rel_z: [768, 1024, 4]
+    pitch_roll: [768, 1024, 5]
     rel_z_pitch_roll: [768, 1024, 6]
   num_classes: 1  # Depth estimation is a regression task
 

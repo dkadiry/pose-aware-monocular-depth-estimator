@@ -212,7 +212,7 @@ def main():
                 'BottleNeckBlock': BottleNeckBlock
             }
         )
-        print("Pre-trained model loaded successfully.")
+        print(f"Pre-trained model loaded successfully from {pretrained_model_path}")
         
         # Define a mapping from pre-trained model layer names to current model layer names
         layer_name_mapping = {
@@ -324,7 +324,7 @@ def main():
 
     early_stopping_cb = tf.keras.callbacks.EarlyStopping(
         monitor='val_loss',
-        patience=10,
+        patience=11,
         restore_best_weights=True,
         verbose=1
     )
@@ -339,6 +339,7 @@ def main():
     # Define callbacks list
     callbacks = [checkpoint_cb, early_stopping_cb, tensorboard_cb]
     
+
     # Train the model
     history = model.fit(
         train_dataset,
@@ -352,6 +353,8 @@ def main():
     os.makedirs(saved_model_dir, exist_ok=True)
     model.save(saved_model_dir)
     print(f"Model saved to {saved_model_dir}")
+    
+    
 
     
     

@@ -15,6 +15,7 @@ dataset_parameters:
   pose_channels:
     vanilla: 0
     rel_z: 1
+    pitch_roll: 2 
     rel_z_pitch_roll: 3
   percentiles_path: 'utils/percentiles.npz'
   pose_normalization_params_path: "data/cedarbay/pose_stats.json"
@@ -23,24 +24,28 @@ model_parameters:
   input_shapes:
     vanilla: [768, 1024, 3]
     rel_z: [768, 1024, 4]
+    pitch_roll: [768, 1024, 5]
     rel_z_pitch_roll: [768, 1024, 6]
   num_classes: 1  # Depth estimation is a regression task
 
 inference_parameters:
-  model_variant: 'rel_z_pitch_roll'  # Options: 'vanilla', 'rel_z', 'rel_z_pitch_roll' 
+  model_variant: 'rel_z'  # Options: 'vanilla', 'rel_z', 'rel_z_pitch_roll' 
   models:
     vanilla:
       saved_model_path: 'saved_models/cedarbay_vanilla_model_unet_v3'  # Exact path to trained model weights
       output_dir: 'inference_results/vanilla_v3'  # Directory to save predictions and visualizations
     rel_z:
-      checkpoint_file: 'checkpoints\cedarbay_rel_z\cedarbay_rel_z_model_unet-23.ckpt' 
-      saved_model_path: 'saved_models/cedarbay_rel_z_model_unet'  
-      output_dir: 'inference_results/rel_z'  
+      checkpoint_file: 'checkpoints/cedarbay_rel_z_nsm/cedarbay_rel_z_nsm_model_unet-45.ckpt'
+      saved_model_path: 'saved_models/cedarbay_rel_z_model_unet_nsm' 
+      output_dir: 'inference_results/rel_z_nsm'
+    pitch_roll:
+      checkpoint_file: 'checkpoints/cedarbay_rel_z_no_stop/cedarbay_rel_z_ns_model_unet-49.ckpt' 
+      saved_model_path: 'saved_models/cedarbay_pitch_roll_model_unet_nsmpr'  
+      output_dir: 'inference_results/pitch_roll_nsm'
     rel_z_pitch_roll:
-      checkpoint_file: 'checkpoints\cedarbay_rel_z\cedarbay_rel_z_pitch_roll_model_unet-47.ckpt'
-      saved_model_path: 'saved_models/cedarbay_rel_z_pitch_roll_model_unet'
-      save_best_model_path: 'saved_models\cedarbay_rel_z_pitch_roll_model_unet_epoch_47'
-      output_dir: 'inference_results/rel_z_pitch_roll_epoch_47'  
+      checkpoint_file: 'checkpoints/cedarbay_pitch_roll_nsmpr/cedarbay_pitch_roll_model_unet_nsmpr-48.ckpt'
+      saved_model_path: 'saved_models/cedarbay_rel_z_pitch_roll_model_unet_nsmpr'
+      output_dir: 'inference_results\rel_z_pitch_roll_nsmpr'  
   visualize: true                # Whether to generate visualizations
   save_predictions: true         # Whether to save prediction maps
   save_error_maps: true          # Whether to save error maps
