@@ -66,7 +66,7 @@ def main():
 
 
     # Save the complete model (architecture + weights)
-    save_model_dir = inference_params['models'][model_variant]['save_best_model_path']
+    save_model_dir = inference_params['models'][model_variant]['saved_best_model_path']
     try:
         os.makedirs(save_model_dir, exist_ok=True)
         model.save(save_model_dir)

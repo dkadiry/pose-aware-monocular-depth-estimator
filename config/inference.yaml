@@ -11,14 +11,14 @@ dataset_parameters:
   test_ratio: 0.05
   shuffle: True
   crop_pixels: 120
-  pose_csv_path: 'data\cedarbay\Filtered_Relative_FFC_Pose_Euler.csv'  # Path to pose CSV
+  pose_csv_path: 'data/cedarbay/Filtered_Absolute_FFC_Pose_Euler.csv' # Path to pose CSV
   pose_channels:
     vanilla: 0
     rel_z: 1
     pitch_roll: 2 
     rel_z_pitch_roll: 3
   percentiles_path: 'utils/percentiles.npz'
-  pose_normalization_params_path: "data/cedarbay/pose_stats.json"
+  pose_normalization_params_path: "data/cedarbay/absolute_pose_stats.json"
 
 model_parameters:
   input_shapes:
@@ -29,15 +29,16 @@ model_parameters:
   num_classes: 1  # Depth estimation is a regression task
 
 inference_parameters:
-  model_variant: 'rel_z'  # Options: 'vanilla', 'rel_z', 'rel_z_pitch_roll' 
+  model_variant: 'vanilla'  # Options: 'vanilla', 'rel_z', 'rel_z_pitch_roll' 
   models:
     vanilla:
       saved_model_path: 'saved_models/cedarbay_vanilla_model_unet_v3'  # Exact path to trained model weights
-      output_dir: 'inference_results/vanilla_v3'  # Directory to save predictions and visualizations
+      output_dir: 'inference_results/vanilla_best'  # Directory to save predictions and visualizations
     rel_z:
-      checkpoint_file: 'checkpoints/cedarbay_rel_z_nsm/cedarbay_rel_z_nsm_model_unet-45.ckpt'
-      saved_model_path: 'saved_models/cedarbay_rel_z_model_unet_nsm' 
-      output_dir: 'inference_results/rel_z_nsm'
+      checkpoint_file: 'checkpoints/cedarbay_abs_z/cedarbay_abs_z_model_unet-49.ckpt'
+      saved_model_path: 'saved_models/cedarbay_abs_z_model_unet'
+      saved_best_model_path: 'saved_models/cedarbay_abs_z_model_unet_49' 
+      output_dir: 'inference_results/abs_z_full'
     pitch_roll:
       checkpoint_file: 'checkpoints/cedarbay_rel_z_no_stop/cedarbay_rel_z_ns_model_unet-49.ckpt' 
       saved_model_path: 'saved_models/cedarbay_pitch_roll_model_unet_nsmpr'  

@@ -290,9 +290,13 @@ class CedarBayDataset(tf.keras.utils.Sequence):
             
             # Normalize the pose value to [mean=0, std=1]
             normalized_value = (pose_data[pose_key] - mean_val) / std_val
+            #if pose_key == "tz":
+            #    print(f"Pre normalized pose value: {pose_data[pose_key]} | Normalized Tz after zero center norm: {normalized_value}")
 
             # Clip the values to +-3 Std to handle any outliers
             normalized_value = np.clip(normalized_value, -3.0, 3.0)
+            #if pose_key == "tz":
+            #    print(f"Normalized Tz after clipping: {normalized_value}")
             #print(f"Pre normalized pose value: {pose_data[pose_key]}, Post Normalized Pose value: {normalized_value}")
             
             # Create an image filled with the normalized pose value
@@ -300,8 +304,8 @@ class CedarBayDataset(tf.keras.utils.Sequence):
 
             if pose_key == 'tz':
                 # Apply Gaussian spatial modulation
-                #pose_image *= combined_mask # Emphasize central 
-                pose_image = np.where(mask > 0, pose_image, 0.0)
+                pose_image *= combined_mask # Emphasize central 
+                #pose_image = np.where(mask > 0, pose_image, 0.0)
                 
             if pose_key == 'pitch' or pose_key == 'roll':
                 # Apply mask: set invalid regions to zero

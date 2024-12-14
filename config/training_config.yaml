@@ -11,14 +11,14 @@ dataset_parameters:
   test_ratio: 0.05
   shuffle: True
   crop_pixels: 120  # Based on empirical analysis
-  pose_csv_path: 'data/cedarbay/Filtered_Relative_FFC_Pose_Euler.csv'  # Path to pose CSV
+  pose_csv_path: 'data/cedarbay/Filtered_Absolute_FFC_Pose_Euler.csv'  # Path to pose CSV
   pose_channels:
     vanilla: 0  # No pose channels for vanilla model
-    rel_z: 1  # Relative Z for Model 2
+    rel_z: 1  # Relative/ Absolute Z for Model 2
     pitch_roll: 2 
     rel_z_pitch_roll: 3  # Relative Z, Pitch, Roll for Model 3
   percentiles_path: 'utils/percentiles.npz'
-  pose_normalization_params_path: "data/cedarbay/pose_stats.json"
+  pose_normalization_params_path: "data/cedarbay/absolute_pose_stats.json"
 
 experiment_parameters:
   model_variant: 'rel_z' # 'vanilla', 'rel_z' or 'rel_z_pitch_roll'
@@ -35,9 +35,9 @@ experiment_parameters:
       checkpoint_dir: 'checkpoints/cedarbay_vanilla_v3'
       checkpoint_file: 'checkpoints/cedarbay_vanilla_v3/cedarbay_vanilla_model_v3_unet-{epoch:02d}.ckpt'
     rel_z:
-      saved_model_dir: 'saved_models/cedarbay_rel_z_model_unet_nsm'
-      checkpoint_dir: 'checkpoints/cedarbay_rel_z_nsm'
-      checkpoint_file: 'checkpoints/cedarbay_rel_z_nsm/cedarbay_rel_z_nsm_model_unet-{epoch:02d}.ckpt'
+      saved_model_dir: 'saved_models/cedarbay_abs_z_model_unet'
+      checkpoint_dir: 'checkpoints/cedarbay_abs_z'
+      checkpoint_file: 'checkpoints/cedarbay_abs_z/cedarbay_abs_z_model_unet-{epoch:02d}.ckpt'
     pitch_roll:
       saved_model_dir: 'saved_models/cedarbay_pitch_roll_model_unet_nsmpr'
       checkpoint_dir: 'checkpoints/cedarbay_pitch_roll_nsmpr'

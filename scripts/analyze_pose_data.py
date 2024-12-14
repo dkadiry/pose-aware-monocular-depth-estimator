@@ -43,8 +43,8 @@ def analyze_pose_data(pose_csv_path: str, output_json_path: str, pose_columns: L
 if __name__ == "__main__":
     
     # Define paths
-    pose_csv_path = 'data/cedarbay/Filtered_Relative_FFC_Pose_Euler.csv' 
-    output_json_path = 'data/cedarbay/pose_normalization_params.json'  
+    pose_csv_path = 'data/cedarbay/Filtered_Absolute_FFC_Pose_Euler.csv' 
+    output_json_path = 'data/cedarbay/absolute_pose_normalization_params.json'  
     pose_columns = ['tz', 'pitch', 'roll'] 
     
     analyze_pose_data(pose_csv_path, output_json_path, pose_columns)

@@ -102,12 +102,12 @@ def main():
     Main function to analyze pose data and compute statistics.
     """
   
-    POSE_CSV_PATH = 'data\cedarbay\Filtered_Relative_FFC_Pose_Euler.csv'          # Path to your pose CSV file
-    OUTPUT_JSON_PATH = 'data\cedarbay\pose_stats.json'          # Desired output JSON file path
+    POSE_CSV_PATH = 'data\cedarbay\Filtered_Absolute_FFC_Pose_Euler.csv'          # Path to your pose CSV file
+    OUTPUT_JSON_PATH = 'data\\cedarbay\\absolute_pose_stats.json'          # Desired output JSON file path
 
     # Percentile thresholds to exclude outliers
-    LOWER_PERCENTILE = 1.0    # e.g., 1st percentile
-    UPPER_PERCENTILE = 99.0   # e.g., 99th percentile
+    LOWER_PERCENTILE = 0.0    # e.g., 1st percentile
+    UPPER_PERCENTILE = 100.0   # e.g., 99th percentile
     
 
     print(f"Starting pose data analysis...\n")
