@@ -70,7 +70,7 @@ If you are interested in the full discussion of my results and observations, ple
 
 ## 📖 Acknowledgments
 This work is part of my MSc thesis at **Western University**, titled:
-**"Investigating the Influence of Scale Cues and Pose Integration on Monocular Depth Estimation for Resource-Constrained Mobile Robots."**
+**"Investigating the Influence of Scale Cues and Pose Integration on AI-Based Monocular Depth Estimation for Resource-Constrained Mobile Robots."**
 
 For citations, please refer to my thesis document (link will be included upon thesis publication).
 
