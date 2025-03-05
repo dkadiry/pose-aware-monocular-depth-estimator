@@ -1,7 +1,7 @@
 # Pose Aware Monocular Depth Estimation Project
 
 ## 📌 Project Overview
-This repository contains the code for training and deploying different **monocular depth estimators** designed for resource-constrained mobile robots. The goal was to enhance depth estimation by integrating pose information and leveraging scale cues from the environment. Different pose encoding techniques were tested and subsequently the model is designed to dynamically increase/decrease the number of input channels based on the parameters in the training and inference scripts.
+This repository contains the code for training and deploying different **monocular depth estimators** designed for resource-constrained mobile robots. The goal was to enhance depth estimation by integrating pose information and leveraging scale cues from the environment. To test different pose encoding techniques the model is designed to dynamically increase/decrease the number of input channels based on the parameters in the training and inference scripts.
 
 This project investigated the qualitative and quantitative improvements that can be obtained while incorporating either relative camera motion measurements or absolute camera position measurements into the training and inference pipeline for monocular depth estimation model designed to process isolated images on a micro-rover with no pose estimation sensors. The pose measurements were obtained using the rear-facing camera of the rover, scale-cues available in the rear-view of the rover (i.e. tire tracks and other known-size landmarks), and a monocular pose estimation algorithm implemented in my [Pose Estimator Repository](https://github.com/dkadiry/final-pose-estimator).
 
