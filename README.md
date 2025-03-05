@@ -11,7 +11,7 @@ We see some qualitative improvements in object boundary detection and mid-range 
 - Uses **U-Net architecture** for depth estimation.
 - Incorporates **pose maps as auxiliary input** to improve depth accuracy.
 - Can be **trained from scratch** using the train.py script
-- Includes a training_config.yaml file and an inference.yaml file which contain dataset, model, training, and results parameters that can be modified depending on:
+- Includes [training configuration](config/training_config.yaml) and [inference configuration](config/inference.yaml) files which contain dataset, model, training, and results parameters that can be modified depending on:
     - The dataset directory that you include
     - The type of model you want to train (Pose Enhanced or Vanilla)
     - The model training parameters
@@ -34,6 +34,9 @@ conda activate myokadirienv
 
 ### **3. Train Your Own Model**
 Since the trained model is not included in this repository, you can train your own using the provided training script "train.py".
+
+## Datasets
+The model was fine-tuned on a custom dataset collected at a beach. The dataset used for pre-training and fine-tuning are not included in this repo. You will need to perform model pre-training and training using either your own data or publicly available datasets like the DIODE dataset.
 
 
 ## 📊 Some Qualitative Results
