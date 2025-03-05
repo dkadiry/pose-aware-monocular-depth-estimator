@@ -21,7 +21,7 @@ dataset_parameters:
   pose_normalization_params_path: "data/cedarbay/absolute_pose_stats.json"
 
 experiment_parameters:
-  model_variant: 'rel_z' # 'vanilla', 'rel_z' or 'rel_z_pitch_roll'
+  model_variant: 'vanilla' # 'vanilla', 'rel_z' or 'rel_z_pitch_roll'
   learning_rate: 0.00001
   epochs: 50
   optimizer: 'adam'

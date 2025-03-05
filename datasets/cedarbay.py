@@ -436,7 +436,7 @@ def main():
         crop_pixels=crop_pixels,
         shuffle=shuffle,
         pose_csv_path=pose_csv_path, 
-        pose_channels=pose_channels['rel_z']        
+        pose_channels=pose_channels['vanilla']        
     )
 
     # Fetch a single batch
@@ -461,7 +461,7 @@ def main():
             title_depth="Sample Normalized Depth Map",
             #title_mask="Sample Depth Mask",
             title_overlay="Sample Depth Overlay",
-            mode = "all_with_pose"
+            mode = "all"
         )
     else:
         print("No samples found in the batch.")
