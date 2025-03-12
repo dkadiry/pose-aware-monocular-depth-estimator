@@ -5,7 +5,7 @@ This repository contains the code for training and deploying different **monocul
 
 This project investigated the qualitative and quantitative improvements that can be obtained while incorporating either relative camera motion measurements or absolute camera position measurements into the training and inference pipeline for monocular depth estimation model designed to process isolated images on a micro-rover with no pose estimation sensors. The pose measurements were obtained using the rear-facing camera of the rover, scale-cues available in the rear-view of the rover (i.e. tire tracks and other known-size landmarks), and a monocular pose estimation algorithm implemented in my [Pose Estimator Repository](https://github.com/dkadiry/final-pose-estimator).
 
-We see some qualitative improvements in object boundary detection and mid-range error gradients after including absolute pose values in model training and inference. Refer to my MSc Thesis document for full a discussion. (Link will be included upon thesis publication)
+We see some qualitative improvements in object boundary detection and mid-range error gradients after including absolute pose values in model training and inference. Refer to my MSc Thesis document for full a discussion. [Link to thesis publication](https://ir.lib.uwo.ca/etd/10688)
 
 ### **Key Features:**
 - Uses **U-Net architecture** for depth estimation.
@@ -72,6 +72,7 @@ If you are interested in the full discussion of my results and observations, ple
 This work is part of my MSc thesis at **Western University**, titled:
 **"Investigating the Influence of Scale Cues and Pose Integration on AI-Based Monocular Depth Estimation for Resource-Constrained Mobile Robots."**
 
-For citations, please refer to my thesis document (link will be included upon thesis publication).
+For citations, please refer to my [thesis publication](https://ir.lib.uwo.ca/etd/10688).
+
 
 
