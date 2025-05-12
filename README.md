@@ -48,7 +48,7 @@ Each result in the following order (from left to right, top to bottom):
 3. **Ground Truth Depth Map**
 4. **Error Map** (Evaluates pixel-wise differences between the Ground Truth and the Generated Depth Map.)
 
-The performance of all depth estimation models were compared qualitatively using the overall MSE, MAE, and RMSE error metrics of the models on the full testing dataset. I also implemented a per sample histogram analysis of each model's error metrics in RMSE, MAE, and MSE to further validate the conclusions drawn from the qualitative analysis.
+The performance of all depth estimation models were compared quantitatively using the overall MSE, MAE, and RMSE error metrics of the models on the full testing dataset. I also implemented a per sample histogram analysis of each model's error metrics in RMSE, MAE, and MSE to further validate the conclusions drawn from the quantitative analysis.
 
 - **MSE (Mean Squared Error)**: Measures the average squared differences between predicted and actual depth values.
 - **MAE (Mean Absolute Error)**: Measures the absolute differences, making it more interpretable.
